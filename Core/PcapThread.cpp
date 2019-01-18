@@ -12,7 +12,7 @@ PcapThread::PcapThread()
 
 PcapThread::PcapThread(pcap_t *dev, u_short port)
 {
-	Dev = dev;
+	m_pDev = dev;
 	p_Port = port;
 
 	p_PcapThread = this;
@@ -36,7 +36,7 @@ void PcapThread::run()
 	struct pcap_pkthdr *header;		//接收到的数据包的头部
 	const u_char *pkt_data;			//接收到的数据包的内容
 
-	while ((res = pcap_next_ex(Dev, &header, &pkt_data)) >= 0)
+	while ((res = pcap_next_ex(m_pDev, &header, &pkt_data)) >= 0)
 	{
 		if (res == 0) {
 			//返回值为0代表接受数据包超时，重新循环继续接收
@@ -85,6 +85,9 @@ void PcapThread::Loop(const struct pcap_pkthdr *header, const u_char *pkt_data)
 
 		if (MsgCon.Length > 0)
 		{
+			if (MsgCon.Length == 1 && payload.at(0) == 0x00)	//过滤长度=1并且数据为0的数据包（可能是握手成功的数据包）
+				break;
+
 			count++;
 			emit signal_Data(MsgCon, payload);
 		}
@@ -92,13 +95,13 @@ void PcapThread::Loop(const struct pcap_pkthdr *header, const u_char *pkt_data)
 	case IPPROTO_UDP:
 		return;
 	case IPPROTO_ICMP:
-		qDebug() << QString("   Protocol: ICMP");
+		//qDebug() << QString("   Protocol: ICMP");
 		return;
 	case IPPROTO_IP:
-		qDebug() << QString("   Protocol: IP");
+		//qDebug() << QString("   Protocol: IP");
 		return;
 	default:
-		qDebug() << QString("   Protocol: unknown");
+		//qDebug() << QString("   Protocol: unknown");
 		return;
 	}
 
@@ -114,49 +117,6 @@ void PcapThread::Loop(const struct pcap_pkthdr *header, const u_char *pkt_data)
 	///* 打印数据包的时间戳和数据包长度 */
 	//qDebug() << QString("时间戳 秒：[%1] // [%2]  /n微秒 [%3]  length:[%4]").arg(timestr).arg(header->ts.tv_sec)
 	//	.arg(header->ts.tv_usec).arg(header->len);
-
-//	//另一种方式解析报文内容
-//	ip_header *ih;
-//	tcp_header *tcp_h;
-//	u_int ip_len;
-//	u_int tcp_len;
-//	u_short sport, dport;
-//
-//	/* 获得IP数据包头部的位置 */
-//	ih = (ip_header *)(pkt_data + 14); //以太网头部长度
-//
-//	/* 获得TCP首部的位置 */
-//	ip_len = (ih->ver_ihl & 0xf) * 4;
-//	tcp_h = (tcp_header *)((u_char*)ih + ip_len);
-//	tcp_len = tcp_h->hlen * 4;
-//	char *data = (char*)tcp_h + tcp_len;
-//	u_int data_len = ntohs(ih->tlen) - ip_len - tcp_len;	//如果长度太大，则会导致内存溢出
-//	char buffer[20000];
-//	if (data_len > 20000)
-//		return;
-//	memcpy(buffer, data, data_len);
-//	buffer[data_len] = '\0';
-//
-//	/* 将网络字节序列转换成主机字节序列 */
-//	sport = ntohs(tcp_h->sport);	//源端口
-//	dport = ntohs(tcp_h->dport);	//目的端口
-//
-////	QByteArray array(buffer);
-//
-//	/* 打印收发IP地址和端口 */
-//	qDebug() << QString("%1 -> %2 [%3.%4.%5.%6] -> [%7.%8.%9.%10]")
-//		.arg(sport)
-//		.arg(dport)
-//
-//		.arg(ih->saddr.byte1)
-//		.arg(ih->saddr.byte2)
-//		.arg(ih->saddr.byte3)
-//		.arg(ih->saddr.byte4)
-//
-//		.arg(ih->daddr.byte1)
-//		.arg(ih->daddr.byte2)
-//		.arg(ih->daddr.byte3)
-//		.arg(ih->daddr.byte4);
 
 }
 
@@ -179,7 +139,6 @@ _MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, u_int len, cons
 {
 	const struct sniff_tcp *tcp;		/* The TCP header */
 	int size_tcp;
-	int size_payload;
 
 	_MessageContent MsgCon;
 	memset(&MsgCon, 0, sizeof(_MessageContent));
@@ -192,9 +151,8 @@ _MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, u_int len, cons
 		return MsgCon;
 	}
 
-	//物理地址
 	memcpy(&MsgCon.DstMACAddress, pkt_data, 6);
-	memcpy(&MsgCon.SrcMACAddress, pkt_data+6, 6);
+	memcpy(&MsgCon.SrcMACAddress, pkt_data+6, 6);	//物理地址
 	MsgCon.SrcAddress = ip->ip_src;
 	MsgCon.DstAddress = ip->ip_dst;
 	MsgCon.SrcPoet = ntohs(tcp->th_sport);
@@ -207,16 +165,13 @@ _MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, u_int len, cons
 	*/
 
 	/* 计算有效载荷大小 */
-	//size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
-	size_payload = len - (SIZE_ETHERNET+size_ip + size_tcp);
+	int size_payload = len - (SIZE_ETHERNET + size_ip + size_tcp);
 	MsgCon.Length = size_payload;
 	/* 计算有效载荷 */
 	if (size_payload > 0) {
 		//获取除去IP头+IP协议头+TCP协议头长度之后数据长度为size_payload的数据信息
 		QByteArray tByte((char *)(pkt_data + SIZE_ETHERNET + size_ip + size_tcp), size_payload);
 		payload = tByte;
-
-		//payload.append((char *)(pkt_data + SIZE_ETHERNET + size_ip + size_tcp));
 
 		// 打印有效载荷信息它可能是二进制的，所以不要只是将其视为一个字符串。
 		//print_payload(payload, size_payload);
@@ -225,6 +180,30 @@ _MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, u_int len, cons
 	return MsgCon;
 }
 
+void PcapThread::UDP(const u_char *pkt_data)
+{
+	ip_header *ih;
+	udp_header *udp_h;
+	u_int ip_len;
+	u_int udp_len;
+	u_short sport, dport;
+
+	/* 获得IP数据包头部的位置 */
+	ih = (ip_header *)(pkt_data + SIZE_ETHERNET); //以太网头部长度
+	ip_len = (ih->ver_ihl & 0xf) * 4;
+	if (ip_len < 20)
+	{
+		return;
+	}
+
+	/* 获得TCP首部的位置 */
+	udp_h = (udp_header *)((u_char*)ih +ip_len);
+
+	/* 将网络字节序列转换成主机字节序列 */
+	sport = ntohs(udp_h->sport);	//源端口
+	dport = ntohs(udp_h->dport);	//目的端口
+
+}
 
 /*
 * 打印包有效载荷数据（避免打印二进制数据）
@@ -325,7 +304,7 @@ void PcapThread::print_hex_ascii_line(const u_char *payload, int len, int offset
  * 计算时间差
  *
  * long timesec		秒数
- * long usec		微秒
+ * long usec		微秒(* 0.000001)转换为秒
  */
 double PcapThread::getTimeDifference(long timesec ,long timeusec)
 {
