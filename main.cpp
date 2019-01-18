@@ -1,4 +1,4 @@
-#include "Core/PcapTest.h"
+#include "Core/mainwindow.h"
 #include <QApplication>
 #include <QTranslator>
 
@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
         a.installTranslator(&t_Translator);
     }
 
-	PcapTest w;
+    MainWindow w;
 	w.show();
 	return a.exec();
 }

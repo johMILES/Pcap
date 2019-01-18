@@ -17,25 +17,21 @@ OBJECTS_DIR += debug
 UI_DIR += ./GeneratedFiles
 RCC_DIR += ./GeneratedFiles
 
-RESOURCES += PcapTest.qrc
-
 FORMS += \
-    Core/PcapTest.ui
+    Core/mainwindow.ui
 
 HEADERS += \
     Core/PcapCommon.h \
-    Core/PcapTest.h \
     Core/PcapThread.h \
     Core/Public.h \
     Core/tcpipcommon.h \
-    Core/TransferSignas.h
+    Core/mainwindow.h
 
 SOURCES += \
     Core/PcapCommon.cpp \
-    Core/PcapTest.cpp \
     Core/PcapThread.cpp \
-    Core/TransferSignas.cpp \
-    main.cpp
+    main.cpp \
+    Core/mainwindow.cpp
 
 INCLUDEPATH += $$PWD/lib/WpdPack/Include
 

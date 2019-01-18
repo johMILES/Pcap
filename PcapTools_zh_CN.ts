@@ -6,12 +6,12 @@
     <message>
         <location filename="Core/PcapTest.cpp" line="26"/>
         <source>warning</source>
-        <translation type="unfinished">告警</translation>
+        <translation>告警</translation>
     </message>
     <message>
         <location filename="Core/PcapTest.cpp" line="26"/>
         <source>in working ,exit?</source>
-        <translation type="unfinished">正在抓包中，是否退出？</translation>
+        <translation>正在抓包中，是否退出？</translation>
     </message>
 </context>
 <context>
