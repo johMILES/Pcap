@@ -23,11 +23,11 @@ signals:
 	void signal_Data(_MessageContent MsgCon, QByteArray payload);
 
 private:
-	pcap_t *Dev;
+	pcap_t *m_pDev;
 	u_short p_Port;
 
 	_MessageContent TCP(const sniff_ip *ip, int size_ip, u_int len, const u_char *buffer, QByteArray &payload);
-
+	void UDP(const u_char *buffer);
 
 
 	//以16字节为单位打印数据：偏移十六进制ascii

@@ -31,20 +31,22 @@ public:
 
 	void readDatFile();
 
+    QString m_SelectPath;   //先择保存文件路径
+
 private:
-	pcap_if_t *alldevs;
-	pcap_if_t *devs;
-	pcap_t *adHandle;
+	pcap_if_t *m_pAlldevs;
+	pcap_if_t *m_pDevs;
+	pcap_t *m_pAHandle;
 	u_short p_Port;
 
 	//适配器个数
 	int decCount;
 
-	PcapThread *pcapThread;
-	QFile *writeFile;
+	PcapThread *m_pPcapThread;
+	QFile *m_pWriteFile;
 
 
-	void Reset();
+	void reset();
 	//设置过滤器
 	bool setFilter(const char*, char*);
 

@@ -31,6 +31,7 @@ protected:
 private:
     void initWidget();
     void initPcap();
+    bool getPort();
 
 private:
     Ui::MainWindow *ui;
@@ -38,7 +39,7 @@ private:
     QMap<int, _DEVInfo> m_DeviceList;
 
 private:
-    unsigned short m_Port;
+    u_short m_Port;
     bool m_bFlag;	//是否正在抓包标志
 };
 
