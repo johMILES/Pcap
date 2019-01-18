@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    m_Port = 0;
     m_pPcap = NULL;
 
     initWidget();
@@ -49,6 +50,12 @@ void MainWindow::initPcap()
 
         //获取本机适配器列表，将列表填充在下拉框中
         QVector<_DEVInfo> devInfo(m_pPcap->findAllDev());
+        if (devInfo.isEmpty())
+        {
+            ui->Prompt_TextEdit->setPlainText(tr("The device's adapter is empty!"));
+            return;
+        }
+
         m_DeviceList.clear();
         ui->Card_ComboBox->clear();
         for (int i = 0; i < devInfo.count(); i++)
@@ -94,24 +101,32 @@ void MainWindow::slot_Airodump_ng_Button()
     if (!m_bFlag)
     {
         // 1打开适配器
+        if (!getPort())
+        {
+            QMessageBox::warning(this, tr("Warning"), tr("Port number error"));
+            return;
+        }
         m_pPcap->SetPort(m_Port);
         const _DEVInfo devinfo = m_DeviceList.find(ui->Card_ComboBox->currentIndex()).value();
         if (!m_pPcap->openCard(devinfo))
         {
-            ui->Prompt_TextEdit->setPlainText("Connection failed...");
+            ui->Prompt_TextEdit->setPlainText(tr("Connection Failed!"));
             return;
         }
 
-        ui->Prompt_TextEdit->setPlainText("Connection Succeeded...");
-        ui->Start_Btn->setText(QString::fromLocal8Bit("End"));
+        ui->Prompt_TextEdit->setPlainText(tr("Connection Succeeded..."));
+
+        ui->Prompt_TextEdit->append(tr("SavePath:")+m_pPcap->m_SelectPath);
+
+        ui->Start_Btn->setText(tr("End"));
         m_bFlag = true;
     }
     else
     {
         //关闭并停止线程
         m_pPcap->closeCard();
-        ui->Prompt_TextEdit->append("Disconnected");
-        ui->Start_Btn->setText(QString::fromLocal8Bit("Start"));
+        ui->Prompt_TextEdit->append(tr("Disconnected"));
+        ui->Start_Btn->setText(tr("Start"));
         m_bFlag = false;
     }
 }
@@ -128,5 +143,23 @@ void MainWindow::on_actionOpen_triggered()
     if(m_pPcap)
     {
         m_pPcap->readDatFile();
+    }
+}
+
+
+/*!
+ * @brief 获取端口号
+ */
+bool MainWindow::getPort()
+{
+    int port = ui->Port_LineEdit->text().toInt();
+    if (port<1 || port>0xFFFF)
+    {
+        return false;
+    }
+    else
+    {
+        m_Port = port;
+        return true;
     }
 }
