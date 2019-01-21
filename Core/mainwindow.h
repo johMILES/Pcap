@@ -7,6 +7,7 @@
 #include "Public.h"
 
 class QCloseEvent;
+class QLabel;
 class PcapCommon;
 
 namespace Ui {
@@ -23,7 +24,9 @@ public:
 
 private slots:
     void slot_Airodump_ng_Button();
-    void on_actionOpen_triggered();
+    void slot_actionOpen_triggered();
+    void slot_actionExit_triggered();
+    void slot_actionSeting_triggered();
 
 protected:
     void closeEvent(QCloseEvent *event);
@@ -31,6 +34,7 @@ protected:
 private:
     void initWidget();
     void initPcap();
+    void initDefaultSavePath();
     bool getPort();
 
 private:
@@ -40,7 +44,10 @@ private:
 
 private:
     u_short m_Port;
+    QString m_FilePath;
     bool m_bFlag;	//是否正在抓包标志
+
+    QLabel *m_pPermanentStatusbar;
 };
 
 #endif // MAINWINDOW_H

@@ -10,7 +10,7 @@ PcapThread::PcapThread()
 {
 }
 
-PcapThread::PcapThread(pcap_t *dev, u_short port)
+PcapThread::PcapThread(pcap_t *dev, unsigned short port)
 {
 	m_pDev = dev;
 	p_Port = port;
@@ -22,19 +22,29 @@ PcapThread::~PcapThread()
 {
 }
 
-void pcapLoop(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data);
-void pcapLoop(u_char *param, const struct pcap_pkthdr *header, const u_char *pkt_data)
+
+/**
+ * @brief pcapLoop  捕获功能(pcap_loop)的回调函数
+ * @param param
+ * @param header    通用包信息
+ * @param pkt_data  报文数据信息
+ */
+void pcapLoop(unsigned char *param, const struct pcap_pkthdr *header, const unsigned char *pkt_data);
+void pcapLoop(unsigned char *param, const struct pcap_pkthdr *header, const unsigned char *pkt_data)
 {
 	p_PcapThread->Loop(header, pkt_data);
 }
 
-//开始抓包
+
+/**
+ * @brief PcapThread::run  线程运行
+ */
 void PcapThread::run()
 {
 	//利用pcap_next_ex来接受数据包
 	int res;	//表示是否接收到了数据包
 	struct pcap_pkthdr *header;		//接收到的数据包的头部
-	const u_char *pkt_data;			//接收到的数据包的内容
+    const unsigned char *pkt_data;	//接收到的数据包的内容
 
 	while ((res = pcap_next_ex(m_pDev, &header, &pkt_data)) >= 0)
 	{
@@ -53,19 +63,24 @@ void PcapThread::run()
 }
 
 
-void PcapThread::Loop(const struct pcap_pkthdr *header, const u_char *pkt_data)
+/**
+ * @brief PcapThread::Loop  处理捕获到的数据包功能
+ * @param header    数据包通用信息
+ * @param pkt_data  该数据包全部信息
+ */
+void PcapThread::Loop(const struct pcap_pkthdr *header, const unsigned char *pkt_data)
 {
-	static int count = 0;                   /* packet counter */
+    static int count = 0;                   //packet counter
 
-	/* declare pointers to packet headers */
-	const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
-	const struct sniff_ip *ip;              /* The IP header */
+    // declare pointers to packet headers
+    const struct sniff_ethernet *ethernet;  // The ethernet header [1]
+    const struct sniff_ip *ip;              // The IP header
 	int size_ip;
 
-	/* 定义以太网头 */
+    // 定义以太网头
 	ethernet = (struct sniff_ethernet*)(pkt_data);
 
-	/* 定义/计算IP头偏移量 */
+    // 定义/计算IP头偏移量
 	ip = (struct sniff_ip*)(pkt_data + SIZE_ETHERNET);
 	size_ip = IP_HL(ip) * 4;
 	if (size_ip < 20) {
@@ -75,7 +90,7 @@ void PcapThread::Loop(const struct pcap_pkthdr *header, const u_char *pkt_data)
 
 	_MessageContent MsgCon;
 	QByteArray payload;	//有效载荷数据
-	/* 确定协议 */
+    // 确定协议
 	switch (ip->ip_p) {
 	case IPPROTO_TCP:
 		MsgCon = TCP(ip, size_ip, header->len, pkt_data, payload);
@@ -109,41 +124,36 @@ void PcapThread::Loop(const struct pcap_pkthdr *header, const u_char *pkt_data)
 	//struct tm *ltime;
 	//char timestr[16];
 	//time_t local_tv_sec;
-	///* 将时间戳转换成可识别的格式 */
+    //// 将时间戳转换成可识别的格式
 	//local_tv_sec = header->ts.tv_sec;
 	//ltime = localtime(&local_tv_sec);
 	//strftime(timestr, sizeof timestr, "%H:%M:%S", ltime);
 
-	///* 打印数据包的时间戳和数据包长度 */
+    //// 打印数据包的时间戳和数据包长度
 	//qDebug() << QString("时间戳 秒：[%1] // [%2]  /n微秒 [%3]  length:[%4]").arg(timestr).arg(header->ts.tv_sec)
 	//	.arg(header->ts.tv_usec).arg(header->len);
 
 }
 
 
-/*
-方法说明：
-	TCP 协议解析
-
-参数信息：
-	const sniff_ip *ip		//IP头
-	int size_ip				//IP头大小
-	u_int len				//报文总长度
-	const u_char *pkt_data	//报文包数据
-	QByteArray &payload		//解析后的数据信息
-
-返回值：
-	协议头详细信息
-*/
-_MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, u_int len, const u_char *pkt_data , QByteArray &payload)
+/**
+ * @brief PcapThread::TCP                   TCP协议解析
+ * @param[in] const sniff_ip *ip            IP头信息
+ * @param[in] int size_ip                   IP头长度
+ * @param[in] unsigned int len              报文总长度
+ * @param[in] const unsigned char *pkt_data 报文包数据
+ * @param[in] QByteArray &payload           解析后有效数据信息
+ * @return _MessageContent                  协议头详细信息
+ */
+_MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, unsigned int len, const unsigned char *pkt_data , QByteArray &payload)
 {
-	const struct sniff_tcp *tcp;		/* The TCP header */
+    const struct sniff_tcp *tcp;		// The TCP header
 	int size_tcp;
 
 	_MessageContent MsgCon;
 	memset(&MsgCon, 0, sizeof(_MessageContent));
 
-	/* 定义/计算tcp头偏移量 */
+    // 定义/计算tcp头偏移量
 	tcp = (struct sniff_tcp*)(pkt_data + SIZE_ETHERNET + size_ip);
 	size_tcp = TH_OFF(tcp) * 4;
 	if (size_tcp < 20) {
@@ -158,16 +168,17 @@ _MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, u_int len, cons
 	MsgCon.SrcPoet = ntohs(tcp->th_sport);
 	MsgCon.DstPoet = ntohs(tcp->th_dport);
 
-	/* 打印源和目标IP地址 */
-	/*qDebug() << QString("IP Address: [%1] -> [%2]").arg(inet_ntoa(ip->ip_src)).arg(inet_ntoa(ip->ip_dst));
+    /*
+    // 打印源和目标IP地址
+    //qDebug() << QString("IP Address: [%1] -> [%2]").arg(inet_ntoa(ip->ip_src)).arg(inet_ntoa(ip->ip_dst));
 	// 打印端口号
-	qDebug() << QString("      Port: [%1] -> [%2]").arg(ntohs(tcp->th_sport)).arg(ntohs(tcp->th_dport));
+    //qDebug() << QString("      Port: [%1] -> [%2]").arg(ntohs(tcp->th_sport)).arg(ntohs(tcp->th_dport));
 	*/
 
-	/* 计算有效载荷大小 */
+    // 计算有效载荷大小
 	int size_payload = len - (SIZE_ETHERNET + size_ip + size_tcp);
 	MsgCon.Length = size_payload;
-	/* 计算有效载荷 */
+    // 计算有效载荷
 	if (size_payload > 0) {
 		//获取除去IP头+IP协议头+TCP协议头长度之后数据长度为size_payload的数据信息
 		QByteArray tByte((char *)(pkt_data + SIZE_ETHERNET + size_ip + size_tcp), size_payload);
@@ -180,15 +191,19 @@ _MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, u_int len, cons
 	return MsgCon;
 }
 
-void PcapThread::UDP(const u_char *pkt_data)
+/**
+ * @brief PcapThread::UDP  解析UDP数据
+ * @param pkt_data          报文数据
+ */
+void PcapThread::UDP(const unsigned char *pkt_data)
 {
 	ip_header *ih;
 	udp_header *udp_h;
-	u_int ip_len;
-	u_int udp_len;
-	u_short sport, dport;
+    unsigned int ip_len;
+    //unsigned int udp_len;
+    unsigned short sport, dport;
 
-	/* 获得IP数据包头部的位置 */
+    // 获得IP数据包头部的位置
 	ih = (ip_header *)(pkt_data + SIZE_ETHERNET); //以太网头部长度
 	ip_len = (ih->ver_ihl & 0xf) * 4;
 	if (ip_len < 20)
@@ -196,50 +211,53 @@ void PcapThread::UDP(const u_char *pkt_data)
 		return;
 	}
 
-	/* 获得TCP首部的位置 */
-	udp_h = (udp_header *)((u_char*)ih +ip_len);
+    // 获得TCP首部的位置
+    udp_h = (udp_header *)((unsigned char*)ih +ip_len);
 
-	/* 将网络字节序列转换成主机字节序列 */
+    // 将网络字节序列转换成主机字节序列
 	sport = ntohs(udp_h->sport);	//源端口
 	dport = ntohs(udp_h->dport);	//目的端口
 
 }
 
-/*
-* 打印包有效载荷数据（避免打印二进制数据）
-*/
-void PcapThread::print_payload(const u_char *payload, int len)
+
+/**
+ * @brief PcapThread::print_payload  打印包有效载荷数据（避免打印二进制数据）
+ * @param payload
+ * @param len
+ */
+void PcapThread::print_payload(const unsigned char *payload, int len)
 {
 	int len_rem = len;
-	int line_width = 16;			/* number of bytes per line */
+    int line_width = 16;			// 每行的字节数
 	int line_len;
-	int offset = 0;					/* zero-based offset counter */
-	const u_char *ch = payload;
+    int offset = 0;					// 从零开始的偏移计数器
+    const unsigned char *ch = payload;
 
 	if (len <= 0)
 		return;
 
-	/* data fits on one line */
+    // data fits on one line
 	if (len <= line_width) {
 		print_hex_ascii_line(ch, len, offset);
 		return;
 	}
 
-	/* data spans multiple lines */
+    // data spans multiple lines
 	for (;; ) {
-		/* compute current line length */
+        // 计算当前行长度
 		line_len = line_width % len_rem;
-		/* print line */
+        // 打印线
 		print_hex_ascii_line(ch, line_len, offset);
-		/* compute total remaining */
+        // 计算剩余总数
 		len_rem = len_rem - line_len;
-		/* shift pointer to remaining bytes to print */
+        // 将指针移动到要打印的剩余字节
 		ch = ch + line_len;
-		/* add offset */
+        // 添加偏移量
 		offset = offset + line_width;
-		/* check if we have line width chars or less */
+        // 检查我们是否有线宽字符或更少
 		if (len_rem <= line_width) {
-			/* print last line and get out */
+            // 打印最后一行然后离开
 			print_hex_ascii_line(ch, len_rem, offset);
 			break;
 		}
@@ -248,34 +266,36 @@ void PcapThread::print_payload(const u_char *payload, int len)
 	return;
 }
 
-/*
-* 以16字节为单位打印数据：偏移十六进制ascii
-*
-* 00000   47 45 54 20 2f 20 48 54  54 50 2f 31 2e 31 0d 0a   GET / HTTP/1.1..
-*/
-void PcapThread::print_hex_ascii_line(const u_char *payload, int len, int offset)
+
+/**
+ * @brief PcapThread::print_hex_ascii_line  以16字节为单位打印数据：偏移十六进制ascii
+ * @param payload   数据包数据
+ * @param len       数据包长度
+ * @param offset    数据包
+ */
+void PcapThread::print_hex_ascii_line(const unsigned char *payload, int len, int offset)
 {
 	int i;
 	int gap;
-	const u_char *ch;
+    const unsigned char *ch;
 
-	/* offset */
+    // offset
 	qDebug() << QString("%1   ").arg(offset);
 
-	/* hex */
+    // hex
 	ch = payload;
 	for (i = 0; i < len; i++) {
 		qDebug() << QString("%1 ").arg(*ch);
 		ch++;
-		/* print extra space after 8th byte for visual aid */
+        // print extra space after 8th byte for visual aid
 		if (i == 7)
 			qDebug() << QString(" ");
 	}
-	/* print space to handle line less than 8 bytes */
+    // print space to handle line less than 8 bytes
 	if (len < 8)
 		qDebug() << QString(" ");
 
-	/* fill hex gap with spaces if not full line */
+    // fill hex gap with spaces if not full line
 	if (len < 16) {
 		gap = 16 - len;
 		for (i = 0; i < gap; i++) {
@@ -284,7 +304,7 @@ void PcapThread::print_hex_ascii_line(const u_char *payload, int len, int offset
 	}
 	qDebug() << QString("   ");
 
-	/* ascii (if printable) */
+    // ascii (if printable)
 	ch = payload;
 	for (i = 0; i < len; i++) {
 		if (isprint(*ch))
@@ -301,10 +321,10 @@ void PcapThread::print_hex_ascii_line(const u_char *payload, int len, int offset
 
 
 /**
- * 计算时间差
- *
- * long timesec		秒数
- * long usec		微秒(* 0.000001)转换为秒
+ * @brief PcapThread::getTimeDifference 计算时间差
+ * @param timesec   秒数
+ * @param timeusec  微秒(* 0.000001)转换为秒
+ * @return 与上个数据包相隔时间
  */
 double PcapThread::getTimeDifference(long timesec ,long timeusec)
 {

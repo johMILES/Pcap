@@ -24,7 +24,7 @@ PcapCommon::PcapCommon()
     reset();
 }
 
-PcapCommon::PcapCommon(u_short port)
+PcapCommon::PcapCommon(unsigned short port)
 {
     p_Port = port;
 }
@@ -33,7 +33,7 @@ PcapCommon::PcapCommon(u_short port)
 PcapCommon::~PcapCommon()
 {
     reset();
-    /* 释放 */
+
     pcap_freealldevs(m_pAlldevs);
 }
 
@@ -42,7 +42,11 @@ void PcapCommon::reset()
     p_Port = 0;
 }
 
-
+/**
+ * @brief PcapCommon::winSocketInit 初始化Winsock
+ * @param NULL
+ * @return void
+ */
 void PcapCommon::winSocketInit()
 {
     WSADATA wsaData;
@@ -54,7 +58,11 @@ void PcapCommon::winSocketInit()
     }
 }
 
-//扫描并返回本机设备列表
+
+/**
+ * @brief PcapCommon::findAllDev
+ * @return
+ */
 QVector<_DEVInfo> PcapCommon::findAllDev()
 {
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -98,7 +106,7 @@ QVector<_DEVInfo> PcapCommon::findAllDev()
 
 
         //遍历适配器的详细信息
-        pcap_addr_t *a;     //TODO:指针变量初始化
+        pcap_addr_t *a;
         for (a = m_pAlldevs->addresses; a; a = a->next)
         {
             switch (a->addr->sa_family)
@@ -117,8 +125,8 @@ QVector<_DEVInfo> PcapCommon::findAllDev()
             case AF_INET6:
                 //if (a->addr)
                 //{
-                //	qDebug() << "Address Family Name:AF_INET6\n";
-                //	qDebug() << "this is an IPV6 address\n";
+                //	qDebug() << "Address Family Name:AF_INET6";
+                //	qDebug() << "this is an IPV6 address";
                 //}
                 break;
             default:
@@ -131,29 +139,14 @@ QVector<_DEVInfo> PcapCommon::findAllDev()
     return Decs;
 }
 
-//开启进程开始捕获数据
+
+/**
+ * @brief PcapCommon::openCard 开启进程开始捕获数据
+ * @param const _DEVInfo DevInfo
+ * @return bool 是否正常启动抓包功能
+ */
 bool PcapCommon::openCard(const _DEVInfo DevInfo)
 {
-    //选择存放抓包文件路径
-    QWidget *t_filePathWidget = new QWidget;
-    QString file_path = QFileDialog::getExistingDirectory(t_filePathWidget, tr("Save File Path..."), QApplication::applicationDirPath());
-    if (file_path.isEmpty())
-    {
-        delete t_filePathWidget;
-        t_filePathWidget = NULL;
-        return false;
-    }
-    else
-    {
-        delete t_filePathWidget;
-        t_filePathWidget = NULL;
-    }
-    //打开文件
-    m_SelectPath += file_path + "/" + getTime() + ".dat";
-    m_pWriteFile = new QFile(m_SelectPath);
-    if (!m_pWriteFile->open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
-        return false;
-
     char errbuf[PCAP_ERRBUF_SIZE];   //错误缓冲区
     //打开适配器
     if ((m_pAHandle = pcap_open_live(
@@ -169,6 +162,7 @@ bool PcapCommon::openCard(const _DEVInfo DevInfo)
         return false;
     }
 
+    //设置过滤条件
     QByteArray tFilter("ip and port ");
     tFilter.append(QString("%1").arg(p_Port));
     //设置过滤器
@@ -186,7 +180,11 @@ bool PcapCommon::openCard(const _DEVInfo DevInfo)
     return true;
 }
 
-//关闭pcap并结束抓包进程，保存文件
+/**
+ * @brief PcapCommon::closeCard 关闭pcap并结束抓包进程，保存文件
+ * @param NULL
+ * @return void
+ */
 void PcapCommon::closeCard()
 {
     if (m_pAHandle != NULL)
@@ -202,13 +200,34 @@ void PcapCommon::closeCard()
     }
 }
 
-//设置端口过滤
-void PcapCommon::SetPort(u_short port)
+/**
+ * @brief PcapCommon::SetPort 设置端口过滤
+ * @param unsigned short port
+ * @return void
+ */
+void PcapCommon::setPort(unsigned short port)
 {
     p_Port = port;
 }
 
-//接收到消息，记录保存该包数据
+/**
+ * @brief PcapCommon::setFilePath   设置存放文件路径
+ * @param path
+ */
+void PcapCommon::setFilePath(QString path)
+{
+    //为设置路径添加文件名称
+    path+="/"+getTime()+".dat";
+    m_pWriteFile = new QFile(path);
+    if (!m_pWriteFile->open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text))
+        return;
+}
+
+/**
+ * @brief PcapCommon::slot_RecvDataInfo  接收到消息，记录保存该包数据
+ * @param MsgCon    报文头信息
+ * @param payload   报文数据内容
+ */
 void PcapCommon::slot_RecvDataInfo(_MessageContent MsgCon, QByteArray payload)
 {
     QDataStream out(m_pWriteFile);
@@ -219,7 +238,7 @@ void PcapCommon::slot_RecvDataInfo(_MessageContent MsgCon, QByteArray payload)
     QByteArray src_ip = inet_ntoa(MsgCon.SrcAddress);
     QByteArray dst_ip = inet_ntoa(MsgCon.DstAddress);	//收发IP转换
 
-    //格式：QByteArray*4、u_short*2、double、QByteArray
+    //格式：QByteArray*4、unsigned short*2、double、QByteArray
     out << src_mac.data() << dst_mac.data() << src_ip.data() << dst_ip.data()
         << MsgCon.SrcPoet << MsgCon.DstPoet << MsgCon.TimeDifference << payload.data();
 
@@ -228,29 +247,16 @@ void PcapCommon::slot_RecvDataInfo(_MessageContent MsgCon, QByteArray payload)
                 .arg(MsgCon.SrcPoet).arg(MsgCon.DstPoet).arg(MsgCon.TimeDifference).arg(payload.toHex().data());
 }
 
-//读取保存的文件
-void PcapCommon::readDatFile()
+/**
+ * @brief PcapCommon::readDatFile 读取保存的文件
+ */
+void PcapCommon::readDatFile(QString path)
 {
-    //选择存放抓包文件路径
-    QWidget *t_filePathWidget = new QWidget;
-
-    QString file_path = QFileDialog::getOpenFileName(t_filePathWidget, tr("select file"), QApplication::applicationDirPath(), "*.dat");
-    if (file_path.isEmpty())
-    {
-        delete t_filePathWidget;
-        t_filePathWidget = NULL;
-        return;
-    }
-    else
-    {
-        delete t_filePathWidget;
-        t_filePathWidget = NULL;
-    }
-    QFile file(file_path);
+    QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
         return;
-    QDataStream out(&file);
 
+    QDataStream out(&file);
     while (!out.atEnd())
     {
         QByteArray src_mac;
@@ -259,34 +265,31 @@ void PcapCommon::readDatFile()
         QByteArray dst_ip;
         QByteArray payload;
 
-        u_short SrcPoet;
-        u_short DstPoet;			//收发Port
+        unsigned short SrcPoet;
+        unsigned short DstPoet;		//收发Port
         double TimeDifference;		//报文时差
 
-        out >> src_mac >> dst_mac >> src_ip >> dst_ip >> SrcPoet >> DstPoet >> TimeDifference << payload;
+        out >> src_mac >> dst_mac >> src_ip >> dst_ip
+            >> SrcPoet >> DstPoet >> TimeDifference >> payload;
 
         qDebug() << QString("%1  %2  %3  %4  %5  %6  %7  %8")
                     .arg(src_mac.toHex().data()).arg(dst_mac.toHex().data()).arg(src_ip.data()).arg(dst_ip.data())
-                    .arg(SrcPoet).arg(DstPoet).arg(TimeDifference).arg(payload.data());
+                    .arg(SrcPoet).arg(DstPoet).arg(TimeDifference).arg(payload.toHex().data());
     }
 
     file.close();
 }
 
-/*
-方法说明：
-    设置过滤器
 
-参数信息：
-    const char *netmask		//掩码
-    char* packet_filter		//过滤条件
-
-返回值：
-    BOOL	true:设置成功	false:设置失败
-*/
+/**
+ * @brief PcapCommon::setFilter   设置过滤器
+ * @param const char *netmask     掩码
+ * @param char* packet_filter     过滤条件
+ * @return bool true:设置成功 false:设置失败
+ */
 bool PcapCommon::setFilter(const char* netmask, char* packet_filter)
 {
-    u_int ui_netmask = QString(netmask).toInt();
+    unsigned int ui_netmask = QString(netmask).toInt();
     struct bpf_program fcode;
     //编译过滤器
     if (pcap_compile(m_pAHandle, &fcode, packet_filter, 1, ui_netmask) < 0)
@@ -306,66 +309,92 @@ bool PcapCommon::setFilter(const char* netmask, char* packet_filter)
     return true;
 }
 
+
 /**
- * 说明: 打印对象中所有可用的信息
+ * @brief PcapCommon::ifPcap_t  打印该适配器所有可用的信息
+ * @param d
  */
 void PcapCommon::ifPcap_t(pcap_if_t *d)
 {
     pcap_addr_t *a;
 
-    /* Name */
     qDebug() << d->name;
 
-    /* Description */
     if (d->description)
         qDebug() << "Description" << d->description;
 
-    /* 回环地址 */
+    //回环地址
     qDebug() << QString("%1").arg((d->flags & PCAP_IF_LOOPBACK) ? "yes" : "no");
 
-    /* IP addresses */
+    //IP addresses
     for (a = d->addresses; a; a = a->next) {
         qDebug() << QString("Address Family: #%1").arg(a->addr->sa_family);
 
-        /*关于 sockaddr_in 结构请参考其他的网络编程书*/
+        //关于 sockaddr_in 结构请参考其他的网络编程书
         switch (a->addr->sa_family)
         {
         case AF_INET:
-            qDebug() << QString("\t --------------Address Family Name: AF_INET--------------\n");//打印网络地址类型
+            qDebug() << QString("--------------Address Family Name: AF_INET--------------");  //打印网络地址类型
             if (a->addr)		//打印IP地址
-                qDebug() << QString("\t Address: %1\n").arg(iptos(((struct sockaddr_in *)a->addr)->sin_addr.s_addr));
+                qDebug() << QString("Address: %1").arg(iptos(((struct sockaddr_in *)a->addr)->sin_addr.s_addr));
             if (a->netmask)		//打印掩码
-                qDebug() << QString("\t Netmask: %1\n").arg(iptos(((struct sockaddr_in *)a->netmask)->sin_addr.s_addr));
+                qDebug() << QString("Netmask: %1").arg(iptos(((struct sockaddr_in *)a->netmask)->sin_addr.s_addr));
             if (a->broadaddr)	//打印广播地址
-                qDebug() << QString("\tBroadcast Address: %1 \n").arg(iptos(((struct sockaddr_in *)a->broadaddr)->sin_addr.s_addr));
+                qDebug() << QString("\tBroadcast Address: %1 ").arg(iptos(((struct sockaddr_in *)a->broadaddr)->sin_addr.s_addr));
             if (a->dstaddr)		//目的地址
-                qDebug() << QString("\t Destination Address: %1 \n").arg(iptos(((struct sockaddr_in *)a->dstaddr)->sin_addr.s_addr));
+                qDebug() << QString("Destination Address: %1 ").arg(iptos(((struct sockaddr_in *)a->dstaddr)->sin_addr.s_addr));
             break;
         default:
-            qDebug() << QString("\t Address Family Name: Unknown \n");
+            qDebug() << QString("Address Family Name: Unknown ");
             break;
         }
     }
 }
 
-/* 将数字类型的IP地址转换成字符串类型的 */
 #define IPTOSBUFFERS    12
-char* PcapCommon::iptos(u_long in)
+
+/**
+ * @brief PcapCommon::iptos  将数字类型的IP地址转换成字符串类型的
+ * @param in  IP
+ * @return    转换后IP
+ */
+char* PcapCommon::iptos(unsigned long in)
 {
     static char output[IPTOSBUFFERS][3 * 4 + 3 + 1];
     static short which;
-    u_char *p;
+    unsigned char *p;
 
-    p = (u_char *)&in;
+    p = (unsigned char *)&in;
     which = (which + 1 == IPTOSBUFFERS ? 0 : which + 1);
     sprintf_s(output[which], "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
     return output[which];
 }
 
-/*!
-*	获取当前时间
-*/
+/**
+ * @brief PcapCommon::getTime   获取当前时间
+ * @return  年月日-时分秒
+ */
 QString PcapCommon::getTime()
 {
     return QDateTime::currentDateTime().toString("yyyy-MM-dd hh.mm.ss");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

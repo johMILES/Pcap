@@ -4,6 +4,8 @@
 
 #include <QCloseEvent>
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QApplication>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -15,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_pPcap = NULL;
 
     initWidget();
+    initDefaultSavePath();
 }
 
 MainWindow::~MainWindow()
@@ -22,8 +25,8 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-/*!
- * 初始化界面信息
+/**
+ * @brief MainWindow::initWidget  初始化界面信息
  */
 void MainWindow::initWidget()
 {
@@ -36,10 +39,17 @@ void MainWindow::initWidget()
 
     //按钮
     connect(ui->Start_Btn, SIGNAL(clicked(bool)), this, SLOT(slot_Airodump_ng_Button()));
+    ////Menu事件
+    //文件：   打开文件
+    connect(ui->actionOpen, SIGNAL(triggered(bool)), this, SLOT(slot_actionOpen_triggered()));
+    connect(ui->actionExit, SIGNAL(triggered(bool)), this, SLOT(slot_actionExit_triggered()));
+
+    //工具：   设置
+    connect(ui->actionSetting, SIGNAL(triggered(bool)), this, SLOT(slot_actionSeting_triggered()));
 }
 
-/*!
- * @brief 初始化Pcap组件
+/**
+ * @brief MainWindow::initPcap  初始化Pcap组件
  */
 void MainWindow::initPcap()
 {
@@ -66,9 +76,24 @@ void MainWindow::initPcap()
     }
 }
 
-/*!
- * @brief 窗口退出事件
- * @param event 退出事件对象
+/**
+ * @brief MainWindow::initDefaultSavePath   设置默认保存文件路径
+ */
+void MainWindow::initDefaultSavePath()
+{
+    m_FilePath = QApplication::applicationDirPath()+ "/" + tr("CaptureFile");
+    QDir dir(m_FilePath);
+    if (!dir.exists())
+    {
+        dir.mkpath(m_FilePath);
+    }
+    m_pPermanentStatusbar = new QLabel(tr("Current save file path: ")+m_FilePath, this);
+    ui->statusbar->addPermanentWidget(m_pPermanentStatusbar);
+}
+
+/**
+ * @brief MainWindow::closeEvent  窗口退出事件
+ * @param event  退出事件对象
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
@@ -82,15 +107,16 @@ void MainWindow::closeEvent(QCloseEvent *event)
             {
                 m_pPcap->closeCard();
             }
-            event->accept();		//接受信息 程序退出
+            event->accept();		//接受信号 程序退出
             return;
         }
         event->ignore();		//忽略信号，程序继续运行
     }
 }
 
+
 /*!
- * @brief 开始抓包
+ * \brief MainWindow::slot_Airodump_ng_Button  开始抓包按钮事件
  */
 void MainWindow::slot_Airodump_ng_Button()
 {
@@ -106,7 +132,9 @@ void MainWindow::slot_Airodump_ng_Button()
             QMessageBox::warning(this, tr("Warning"), tr("Port number error"));
             return;
         }
-        m_pPcap->SetPort(m_Port);
+
+        m_pPcap->setPort(m_Port);
+        m_pPcap->setFilePath(m_FilePath);
         const _DEVInfo devinfo = m_DeviceList.find(ui->Card_ComboBox->currentIndex()).value();
         if (!m_pPcap->openCard(devinfo))
         {
@@ -115,11 +143,7 @@ void MainWindow::slot_Airodump_ng_Button()
         }
 
         ui->Prompt_TextEdit->setPlainText(tr("Connection Succeeded..."));
-
-        ui->Prompt_TextEdit->append(tr("SavePath:")+m_pPcap->m_SelectPath);
-
         ui->Start_Btn->setText(tr("End"));
-        m_bFlag = true;
     }
     else
     {
@@ -127,14 +151,17 @@ void MainWindow::slot_Airodump_ng_Button()
         m_pPcap->closeCard();
         ui->Prompt_TextEdit->append(tr("Disconnected"));
         ui->Start_Btn->setText(tr("Start"));
-        m_bFlag = false;
     }
+    ui->Card_ComboBox->setEnabled(m_bFlag);
+    ui->Port_LineEdit->setEnabled(m_bFlag);
+
+    m_bFlag = !m_bFlag;
 }
 
 /*!
- * @brief 读取备份数据文件
+ * \brief MainWindow::on_actionOpen_triggered  菜单：读取备份数据文件
  */
-void MainWindow::on_actionOpen_triggered()
+void MainWindow::slot_actionOpen_triggered()
 {
     if(m_pPcap == NULL)
     {
@@ -142,13 +169,43 @@ void MainWindow::on_actionOpen_triggered()
     }
     if(m_pPcap)
     {
-        m_pPcap->readDatFile();
+        //选择存放抓包文件路径
+        QString file_path = QFileDialog::getOpenFileName(this, tr("select file"), QApplication::applicationDirPath()+tr("/CaptureFile"), "*.dat");
+        if (file_path.isEmpty())
+        {
+            return;
+        }
+        m_pPcap->readDatFile(file_path);
     }
+}
+
+/**
+ * @brief MainWindow::slot_actionExit_triggered  菜单：退出软件
+ */
+void MainWindow::slot_actionExit_triggered()
+{
+    this->close();
+}
+/**
+ * @brief MainWindow::slot_actionSeting_triggered  设置保存捕获到报文路径
+ */
+void MainWindow::slot_actionSeting_triggered()
+{
+    //选择存放抓包文件路径
+    QString file_path = QFileDialog::getExistingDirectory(this, tr("Save File Path..."), m_FilePath);
+    if (file_path.isEmpty())
+    {
+        return;
+    }
+    m_FilePath = tr("Current save file path: ")+file_path;
+    m_pPermanentStatusbar->setText(m_FilePath);
+    ui->statusbar->addPermanentWidget(m_pPermanentStatusbar);
 }
 
 
 /*!
- * @brief 获取端口号
+ * \brief MainWindow::getPort  获取端口号
+ * \return  true端口号符合条件
  */
 bool MainWindow::getPort()
 {

@@ -10,6 +10,12 @@
     <height>449</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <family>Arial</family>
+    <pointsize>11</pointsize>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>数据备份工具</string>
   </property>
@@ -131,7 +137,7 @@
           </size>
          </property>
          <property name="text">
-          <string>开始抓包</string>
+          <string>开始记录</string>
          </property>
         </widget>
        </item>
@@ -154,7 +160,7 @@
    </property>
    <widget class="QMenu" name="menu">
     <property name="title">
-     <string>文件</string>
+     <string>文件(&amp;F)</string>
     </property>
     <addaction name="actionOpen"/>
     <addaction name="separator"/>
@@ -162,13 +168,13 @@
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
-     <string>工具</string>
+     <string>工具(&amp;T)</string>
     </property>
     <addaction name="actionSetting"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
-     <string>帮助</string>
+     <string>帮助(&amp;H)</string>
     </property>
     <addaction name="actionAbout"/>
    </widget>
@@ -179,7 +185,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
    <property name="text">
-    <string>打开</string>
+    <string>打开(&amp;O)</string>
    </property>
    <property name="toolTip">
     <string>打开</string>
@@ -190,7 +196,7 @@
   </action>
   <action name="actionExit">
    <property name="text">
-    <string>退出</string>
+    <string>退出(&amp;X)</string>
    </property>
    <property name="toolTip">
     <string>退出</string>

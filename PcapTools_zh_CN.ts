@@ -4,145 +4,177 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="Core/mainwindow.ui" line="14"/>
+        <location filename="Core/mainwindow.ui" line="20"/>
         <source>数据备份工具</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="21"/>
+        <location filename="Core/mainwindow.ui" line="27"/>
         <source>参数设置</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="39"/>
+        <location filename="Core/mainwindow.ui" line="45"/>
         <source>网卡：</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="83"/>
+        <location filename="Core/mainwindow.ui" line="89"/>
         <source>端口号：</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="105"/>
+        <location filename="Core/mainwindow.ui" line="111"/>
         <source>1024</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="134"/>
-        <source>开始抓包</source>
+        <location filename="Core/mainwindow.ui" line="140"/>
+        <source>开始记录</source>
+        <oldsource>开始抓包</oldsource>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="157"/>
-        <source>文件</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="Core/mainwindow.ui" line="165"/>
-        <source>工具</source>
+        <location filename="Core/mainwindow.ui" line="163"/>
+        <source>文件(&amp;F)</source>
         <translation></translation>
     </message>
     <message>
         <location filename="Core/mainwindow.ui" line="171"/>
-        <source>帮助</source>
+        <source>工具(&amp;T)</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="182"/>
-        <location filename="Core/mainwindow.ui" line="185"/>
-        <source>打开</source>
+        <location filename="Core/mainwindow.ui" line="177"/>
+        <source>帮助(&amp;H)</source>
         <translation></translation>
     </message>
     <message>
         <location filename="Core/mainwindow.ui" line="188"/>
+        <source>打开(&amp;O)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="Core/mainwindow.ui" line="191"/>
+        <source>打开</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="Core/mainwindow.ui" line="194"/>
         <source>Ctrl+O</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="193"/>
-        <location filename="Core/mainwindow.ui" line="196"/>
+        <location filename="Core/mainwindow.ui" line="199"/>
+        <source>退出(&amp;X)</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="Core/mainwindow.ui" line="202"/>
         <source>退出</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="201"/>
-        <location filename="Core/mainwindow.ui" line="204"/>
+        <location filename="Core/mainwindow.ui" line="207"/>
+        <location filename="Core/mainwindow.ui" line="210"/>
         <source>设置</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="209"/>
+        <location filename="Core/mainwindow.ui" line="215"/>
         <source>关于</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="55"/>
+        <location filename="Core/mainwindow.cpp" line="65"/>
         <source>The device&apos;s adapter is empty!</source>
         <translation>这台设备上没有网络适配器！</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="77"/>
+        <location filename="Core/mainwindow.cpp" line="84"/>
+        <source>CaptureFile</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="Core/mainwindow.cpp" line="90"/>
+        <location filename="Core/mainwindow.cpp" line="200"/>
+        <source>Current save file path: </source>
+        <translation>文件路径：</translation>
+    </message>
+    <message>
+        <location filename="Core/mainwindow.cpp" line="102"/>
         <source>warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="77"/>
+        <location filename="Core/mainwindow.cpp" line="102"/>
         <source>in working ,exit?</source>
         <translation>正在抓包中，是否退出？</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="106"/>
+        <location filename="Core/mainwindow.cpp" line="132"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="106"/>
+        <location filename="Core/mainwindow.cpp" line="132"/>
         <source>Port number error</source>
         <translation>端口设置失败！请设置在0-65535之间</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="113"/>
+        <location filename="Core/mainwindow.cpp" line="141"/>
         <source>Connection Failed!</source>
         <translation>连接失败！</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="117"/>
+        <location filename="Core/mainwindow.cpp" line="145"/>
         <source>Connection Succeeded...</source>
         <translation>连接成功...</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="119"/>
+        <location filename="Core/mainwindow.cpp" line="173"/>
+        <source>select file</source>
+        <translation>请选择文件</translation>
+    </message>
+    <message>
+        <location filename="Core/mainwindow.cpp" line="173"/>
+        <source>/CaptureFile</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="Core/mainwindow.cpp" line="195"/>
+        <source>Save File Path...</source>
+        <translation>请选择将要保存文件路径...</translation>
+    </message>
+    <message>
         <source>SavePath:</source>
-        <translation>保存文件路径为：</translation>
+        <translation type="vanished">保存文件路径为：</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="121"/>
+        <location filename="Core/mainwindow.cpp" line="146"/>
         <source>End</source>
-        <translation>结束</translation>
+        <translation>结束记录</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="128"/>
+        <location filename="Core/mainwindow.cpp" line="152"/>
         <source>Disconnected</source>
         <translation>已断开连接</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="129"/>
+        <location filename="Core/mainwindow.cpp" line="153"/>
         <source>Start</source>
-        <translation>开始</translation>
+        <translation>开始记录</translation>
     </message>
 </context>
 <context>
     <name>PcapCommon</name>
     <message>
-        <location filename="Core/PcapCommon.cpp" line="139"/>
         <source>Save File Path...</source>
-        <translation>请选择将要保存文件路径...</translation>
+        <translation type="vanished">请选择将要保存文件路径...</translation>
     </message>
     <message>
-        <location filename="Core/PcapCommon.cpp" line="237"/>
         <source>select file</source>
-        <translation>请选择文件</translation>
+        <translation type="vanished">请选择文件</translation>
     </message>
 </context>
 <context>
