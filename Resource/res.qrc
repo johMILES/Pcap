@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>ICON/Pcap.ico</file>
+    </qresource>
+</RCC>

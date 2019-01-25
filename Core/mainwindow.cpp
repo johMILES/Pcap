@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "PcapCommon.h"
 
+#include <QDebug>
 #include <QCloseEvent>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -13,11 +14,11 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    m_Port = 0;
     m_pPcap = NULL;
 
     initWidget();
     initDefaultSavePath();
+
 }
 
 MainWindow::~MainWindow()
@@ -43,7 +44,6 @@ void MainWindow::initWidget()
     //文件：   打开文件
     connect(ui->actionOpen, SIGNAL(triggered(bool)), this, SLOT(slot_actionOpen_triggered()));
     connect(ui->actionExit, SIGNAL(triggered(bool)), this, SLOT(slot_actionExit_triggered()));
-
     //工具：   设置
     connect(ui->actionSetting, SIGNAL(triggered(bool)), this, SLOT(slot_actionSeting_triggered()));
 }
@@ -87,6 +87,7 @@ void MainWindow::initDefaultSavePath()
     {
         dir.mkpath(m_FilePath);
     }
+
     m_pPermanentStatusbar = new QLabel(tr("Current save file path: ")+m_FilePath, this);
     ui->statusbar->addPermanentWidget(m_pPermanentStatusbar);
 }
@@ -133,7 +134,6 @@ void MainWindow::slot_Airodump_ng_Button()
             return;
         }
 
-        m_pPcap->setPort(m_Port);
         m_pPcap->setFilePath(m_FilePath);
         const _DEVInfo devinfo = m_DeviceList.find(ui->Card_ComboBox->currentIndex()).value();
         if (!m_pPcap->openCard(devinfo))
@@ -152,6 +152,7 @@ void MainWindow::slot_Airodump_ng_Button()
         ui->Prompt_TextEdit->append(tr("Disconnected"));
         ui->Start_Btn->setText(tr("Start"));
     }
+
     ui->Card_ComboBox->setEnabled(m_bFlag);
     ui->Port_LineEdit->setEnabled(m_bFlag);
 
@@ -209,14 +210,14 @@ void MainWindow::slot_actionSeting_triggered()
  */
 bool MainWindow::getPort()
 {
-    int port = ui->Port_LineEdit->text().toInt();
+    unsigned short port = ui->Port_LineEdit->text().toInt();
     if (port<1 || port>0xFFFF)
     {
         return false;
     }
     else
     {
-        m_Port = port;
+        m_pPcap->setPort(port);
         return true;
     }
 }

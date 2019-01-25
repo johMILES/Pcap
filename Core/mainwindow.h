@@ -43,7 +43,6 @@ private:
     QMap<int, _DEVInfo> m_DeviceList;
 
 private:
-    u_short m_Port;
     QString m_FilePath;
     bool m_bFlag;	//是否正在抓包标志
 

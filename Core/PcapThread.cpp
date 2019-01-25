@@ -10,7 +10,7 @@ PcapThread::PcapThread()
 {
 }
 
-PcapThread::PcapThread(pcap_t *dev, unsigned short port)
+PcapThread::PcapThread(pcap_t *dev, ushort port)
 {
 	m_pDev = dev;
 	p_Port = port;
@@ -29,8 +29,8 @@ PcapThread::~PcapThread()
  * @param header    通用包信息
  * @param pkt_data  报文数据信息
  */
-void pcapLoop(unsigned char *param, const struct pcap_pkthdr *header, const unsigned char *pkt_data);
-void pcapLoop(unsigned char *param, const struct pcap_pkthdr *header, const unsigned char *pkt_data)
+void pcapLoop(uchar *param, const struct pcap_pkthdr *header, const uchar *pkt_data);
+void pcapLoop(uchar *param, const struct pcap_pkthdr *header, const uchar *pkt_data)
 {
 	p_PcapThread->Loop(header, pkt_data);
 }
@@ -44,7 +44,7 @@ void PcapThread::run()
 	//利用pcap_next_ex来接受数据包
 	int res;	//表示是否接收到了数据包
 	struct pcap_pkthdr *header;		//接收到的数据包的头部
-    const unsigned char *pkt_data;	//接收到的数据包的内容
+    const uchar *pkt_data;	//接收到的数据包的内容
 
 	while ((res = pcap_next_ex(m_pDev, &header, &pkt_data)) >= 0)
 	{
@@ -68,7 +68,7 @@ void PcapThread::run()
  * @param header    数据包通用信息
  * @param pkt_data  该数据包全部信息
  */
-void PcapThread::Loop(const struct pcap_pkthdr *header, const unsigned char *pkt_data)
+void PcapThread::Loop(const struct pcap_pkthdr *header, const uchar *pkt_data)
 {
     static int count = 0;                   //packet counter
 
@@ -95,19 +95,29 @@ void PcapThread::Loop(const struct pcap_pkthdr *header, const unsigned char *pkt
 	case IPPROTO_TCP:
 		MsgCon = TCP(ip, size_ip, header->len, pkt_data, payload);
 
-		//时差
-		MsgCon.TimeDifference = getTimeDifference(header->ts.tv_sec, header->ts.tv_usec);
-
 		if (MsgCon.Length > 0)
 		{
 			if (MsgCon.Length == 1 && payload.at(0) == 0x00)	//过滤长度=1并且数据为0的数据包（可能是握手成功的数据包）
 				break;
 
+			//时差
+			MsgCon.TimeDifference = getTimeDifference(header->ts.tv_sec, header->ts.tv_usec);
 			count++;
-			emit signal_Data(MsgCon, payload);
+			emit signal_PayloadData(MsgCon, payload);
 		}
 		break;
 	case IPPROTO_UDP:
+		MsgCon = UDP(ip, size_ip, pkt_data, payload);
+		if (MsgCon.Length > 0)
+		{
+			if (MsgCon.Length == 1 && payload.at(0) == 0x00)	//过滤长度=1并且数据为0的数据包（可能是握手成功的数据包）
+				break;
+
+			//时差
+			MsgCon.TimeDifference = getTimeDifference(header->ts.tv_sec, header->ts.tv_usec);
+			//count++;
+			emit signal_PayloadData(MsgCon, payload);
+		}
 		return;
 	case IPPROTO_ICMP:
 		//qDebug() << QString("   Protocol: ICMP");
@@ -140,12 +150,12 @@ void PcapThread::Loop(const struct pcap_pkthdr *header, const unsigned char *pkt
  * @brief PcapThread::TCP                   TCP协议解析
  * @param[in] const sniff_ip *ip            IP头信息
  * @param[in] int size_ip                   IP头长度
- * @param[in] unsigned int len              报文总长度
- * @param[in] const unsigned char *pkt_data 报文包数据
+ * @param[in] uint len              报文总长度
+ * @param[in] const uchar *pkt_data 报文包数据
  * @param[in] QByteArray &payload           解析后有效数据信息
  * @return _MessageContent                  协议头详细信息
  */
-_MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, unsigned int len, const unsigned char *pkt_data , QByteArray &payload)
+_MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, uint len, const uchar *pkt_data , QByteArray &payload)
 {
     const struct sniff_tcp *tcp;		// The TCP header
 	int size_tcp;
@@ -161,26 +171,20 @@ _MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, unsigned int le
 		return MsgCon;
 	}
 
-	memcpy(&MsgCon.DstMACAddress, pkt_data, 6);
-	memcpy(&MsgCon.SrcMACAddress, pkt_data+6, 6);	//物理地址
+	//memcpy(&MsgCon.DstMACAddress, pkt_data, 6);
+	//memcpy(&MsgCon.SrcMACAddress, pkt_data+6, 6);	//物理地址
+	MsgCon.type = ProtocolType::TCP;
 	MsgCon.SrcAddress = ip->ip_src;
 	MsgCon.DstAddress = ip->ip_dst;
 	MsgCon.SrcPoet = ntohs(tcp->th_sport);
 	MsgCon.DstPoet = ntohs(tcp->th_dport);
-
-    /*
-    // 打印源和目标IP地址
-    //qDebug() << QString("IP Address: [%1] -> [%2]").arg(inet_ntoa(ip->ip_src)).arg(inet_ntoa(ip->ip_dst));
-	// 打印端口号
-    //qDebug() << QString("      Port: [%1] -> [%2]").arg(ntohs(tcp->th_sport)).arg(ntohs(tcp->th_dport));
-	*/
 
     // 计算有效载荷大小
 	int size_payload = len - (SIZE_ETHERNET + size_ip + size_tcp);
 	MsgCon.Length = size_payload;
     // 计算有效载荷
 	if (size_payload > 0) {
-		//获取除去IP头+IP协议头+TCP协议头长度之后数据长度为size_payload的数据信息
+		//获取除去网络头+IP协议头+TCP协议头长度之后数据长度为size_payload的数据信息
 		QByteArray tByte((char *)(pkt_data + SIZE_ETHERNET + size_ip + size_tcp), size_payload);
 		payload = tByte;
 
@@ -191,33 +195,45 @@ _MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, unsigned int le
 	return MsgCon;
 }
 
-/**
- * @brief PcapThread::UDP  解析UDP数据
- * @param pkt_data          报文数据
- */
-void PcapThread::UDP(const unsigned char *pkt_data)
-{
-	ip_header *ih;
-	udp_header *udp_h;
-    unsigned int ip_len;
-    //unsigned int udp_len;
-    unsigned short sport, dport;
 
-    // 获得IP数据包头部的位置
-	ih = (ip_header *)(pkt_data + SIZE_ETHERNET); //以太网头部长度
-	ip_len = (ih->ver_ihl & 0xf) * 4;
-	if (ip_len < 20)
-	{
-		return;
+/**
+* @brief PcapThread::UDP	TCP协议解析
+* @param ip					IP头信息
+* @param size_ip			IP头长度
+* @param pkt_data			报文包数据
+* @param payload			解析后有效数据信息
+* @return					协议头详细信息
+*/
+_MessageContent PcapThread::UDP(const sniff_ip *ip, int size_ip, const uchar *pkt_data, QByteArray &payload)
+{
+    udp_header *udp_h;
+
+	_MessageContent MsgCon;
+	memset(&MsgCon, 0, sizeof(_MessageContent));
+
+	// 定义/计算tcp头偏移量
+	udp_h = (struct udp_header*)(pkt_data + SIZE_ETHERNET + size_ip);
+
+	//memcpy(&MsgCon.DstMACAddress, pkt_data, 6);
+	//memcpy(&MsgCon.SrcMACAddress, pkt_data+6, 6);	//物理地址
+	MsgCon.type = ProtocolType::UDP;
+	MsgCon.SrcAddress = ip->ip_src;
+	MsgCon.DstAddress = ip->ip_dst;
+	MsgCon.SrcPoet = ntohs(udp_h->sport);
+	MsgCon.DstPoet = ntohs(udp_h->dport);
+
+	// 计算有效载荷大小
+	int size_payload = ntohs(udp_h->len) - 8;
+	MsgCon.Length = size_payload;
+	// 计算有效载荷
+	if (size_payload > 0) {
+		//获取除去网络头+IP协议头+TCP协议头长度之后数据长度为size_payload的数据信息
+		QByteArray tByte((char *)(pkt_data + SIZE_ETHERNET + size_ip + SIZE_UDPHEADER_LEN), size_payload);
+		payload = tByte;
+		qDebug() << payload.toHex();
 	}
 
-    // 获得TCP首部的位置
-    udp_h = (udp_header *)((unsigned char*)ih +ip_len);
-
-    // 将网络字节序列转换成主机字节序列
-	sport = ntohs(udp_h->sport);	//源端口
-	dport = ntohs(udp_h->dport);	//目的端口
-
+	return MsgCon;
 }
 
 
@@ -226,13 +242,13 @@ void PcapThread::UDP(const unsigned char *pkt_data)
  * @param payload
  * @param len
  */
-void PcapThread::print_payload(const unsigned char *payload, int len)
+void PcapThread::print_payload(const uchar *payload, int len)
 {
 	int len_rem = len;
     int line_width = 16;			// 每行的字节数
 	int line_len;
     int offset = 0;					// 从零开始的偏移计数器
-    const unsigned char *ch = payload;
+    const uchar *ch = payload;
 
 	if (len <= 0)
 		return;
@@ -273,11 +289,11 @@ void PcapThread::print_payload(const unsigned char *payload, int len)
  * @param len       数据包长度
  * @param offset    数据包
  */
-void PcapThread::print_hex_ascii_line(const unsigned char *payload, int len, int offset)
+void PcapThread::print_hex_ascii_line(const uchar *payload, int len, int offset)
 {
 	int i;
 	int gap;
-    const unsigned char *ch;
+    const uchar *ch;
 
     // offset
 	qDebug() << QString("%1   ").arg(offset);
