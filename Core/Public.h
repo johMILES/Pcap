@@ -16,7 +16,19 @@
 /* Ethernet addresses are 6 bytes */
 #define ETHER_ADDR_LEN	6
 
-/* Ethernet header */
+//UDP header length 8 bytes
+#define SIZE_UDPHEADER_LEN	8
+
+//协议类型
+enum ProtocolType {
+	TCP,
+	UDP,
+	ICMP,
+	IP
+};
+
+
+//Ethernet header
 struct sniff_ethernet {
 	u_char  ether_dhost[ETHER_ADDR_LEN];    /* destination host address */
 	u_char  ether_shost[ETHER_ADDR_LEN];    /* source host address */
@@ -71,8 +83,9 @@ struct sniff_tcp {
 
 typedef struct __MessageContent
 {
-	char SrcMACAddress[6];
-	char DstMACAddress[6];		//收发MAC地址
+	//char SrcMACAddress[6];
+	//char DstMACAddress[6];	//收发MAC地址
+	ProtocolType type;			//类型
 	struct in_addr SrcAddress;
 	struct in_addr DstAddress;	//收发IP地址
 	u_short SrcPoet;
@@ -82,6 +95,11 @@ typedef struct __MessageContent
 }_MessageContent;
 
 
+typedef struct __LocalCardInfo
+{
+    QString humanReadableName;
+    QString ip;
+}_LocalCardInfo;
 
 typedef struct __DEVInfo {
 	QString name;

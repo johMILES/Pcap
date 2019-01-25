@@ -24,7 +24,7 @@
     <item>
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
-       <string>参数设置</string>
+       <string>监听参数设置</string>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
@@ -185,10 +185,10 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
    <property name="text">
-    <string>打开(&amp;O)</string>
+    <string>回放(&amp;O)</string>
    </property>
    <property name="toolTip">
-    <string>打开</string>
+    <string>回放</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -201,10 +201,13 @@
    <property name="toolTip">
     <string>退出</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
   </action>
   <action name="actionSetting">
    <property name="text">
-    <string>设置</string>
+    <string>设置(&amp;O)</string>
    </property>
    <property name="toolTip">
     <string>设置</string>
