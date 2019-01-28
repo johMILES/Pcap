@@ -28,23 +28,23 @@ PcapCommon::PcapCommon()
 PcapCommon::PcapCommon(unsigned short port)
 {
     p_Port = port;
+    m_pPcapThread = NULL;
 }
 
 
 PcapCommon::~PcapCommon()
 {
-    reset();
-
-    pcap_freealldevs(m_pAlldevs);
+    closeCard();
 }
 
 void PcapCommon::reset()
 {
     p_Port = 0;
+    m_pPcapThread = NULL;
 }
 
 
-/**
+/*!
  * @brief PcapCommon::winSocketInit 初始化Winsock
  * @param NULL
  * @return void
@@ -61,7 +61,7 @@ void PcapCommon::winSocketInit()
 }
 
 
-/**
+/*!
  * @brief PcapCommon::findAllDev
  * @return
  */
@@ -118,12 +118,12 @@ QVector<_DEVInfo> PcapCommon::findAllDev()
 }
 
 
-/**
+/*!
  * @brief PcapCommon::openCard 开启进程开始捕获数据
  * @param const _DEVInfo DevInfo
  * @return bool 是否正常启动抓包功能
  */
-bool PcapCommon::openCard(const _DEVInfo DevInfo)
+bool PcapCommon::openCard(const _DEVInfo _devinfo)
 {
     char errbuf[PCAP_ERRBUF_SIZE];   //错误缓冲区
     //打开适配器
@@ -158,7 +158,7 @@ bool PcapCommon::openCard(const _DEVInfo DevInfo)
     return true;
 }
 
-/**
+/*!
  * @brief PcapCommon::closeCard 关闭pcap并结束抓包进程，保存文件
  * @param NULL
  * @return void
@@ -170,7 +170,14 @@ void PcapCommon::closeCard()
         pcap_close(m_pAHandle);
         m_pAHandle = NULL;
     }
-    m_pPcapThread->wait();
+
+    if (m_pPcapThread != NULL)
+    {
+        m_pPcapThread->wait();
+        delete m_pPcapThread;
+        m_pPcapThread = NULL;
+    }
+    pcap_freealldevs(m_pAlldevs);
 
     if (m_pWriteFile->isOpen())
     {
@@ -178,7 +185,7 @@ void PcapCommon::closeCard()
     }
 }
 
-/**
+/*!
  * @brief PcapCommon::SetPort 设置端口过滤
  * @param unsigned short port
  * @return void
@@ -189,7 +196,7 @@ void PcapCommon::setPort(unsigned short port)
 }
 
 
-/**
+/*!
  * @brief PcapCommon::setFilePath   设置存放文件路径
  * @param path  最后一次抓包保存文件的路径
  */
@@ -201,11 +208,10 @@ void PcapCommon::setFilePath(QString path)
     m_pWriteFile = new QFile(m_FilePath);
 	if (!m_pWriteFile->open(QIODevice::WriteOnly/* | QIODevice::Truncate | QIODevice::Text*/))
 		return;
-
 }
 
 
-/**
+/*!
  * @brief PcapCommon::getFileName  获取本次保存的文件名称
  * @return  最后一次抓包结束保存文件的文件名
  */
@@ -215,7 +221,7 @@ QString PcapCommon::getFileName()
 }
 
 
-/**
+/*!
  * @brief PcapCommon::slot_RecvDataInfo  接收到消息，记录保存该包数据
  * @param MsgCon    报文头信息
  * @param payload   报文数据内容
@@ -254,7 +260,7 @@ void PcapCommon::slot_RecvDataInfo(_MessageContent MsgCon, QByteArray payload)
 }
 
 
-/**
+/*!
  * @brief PcapCommon::readDatFile 读取保存的文件
  */
 void PcapCommon::readDatFile(QString path)
@@ -290,7 +296,7 @@ void PcapCommon::readDatFile(QString path)
 }
 
 
-/**
+/*!
  * @brief PcapCommon::setFilter   设置过滤器
  * @param const char *netmask     掩码
  * @param char* packet_filter     过滤条件
@@ -319,7 +325,7 @@ bool PcapCommon::setFilter(const char* netmask, char* packet_filter)
 }
 
 
-/**
+/*!
  * @brief PcapCommon::ifPcap_t  打印该适配器所有可用的信息
  * @param d
  */
@@ -379,7 +385,7 @@ _DEVInfo PcapCommon::ifPcap_t(pcap_if_t *d)
 
 #define IPTOSBUFFERS    12
 
-/**
+/*!
  * @brief PcapCommon::iptos  将数字类型的IP地址转换成字符串类型的
  * @param in  IP
  * @return    转换后IP
@@ -397,7 +403,7 @@ char* PcapCommon::iptos(unsigned long in)
 }
 
 
-/**
+/*!
  * @brief ip6tos
  * @param sockaddr
  * @param address
@@ -426,7 +432,7 @@ char* PcapCommon::ip6tos(struct sockaddr *sockaddr, char *address, int addrlen)
 }
 
 
-/**
+/*!
  * @brief PcapCommon::getTime   获取当前时间
  * @return  年月日-时分秒
  */

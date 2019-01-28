@@ -24,9 +24,15 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+
+    if (m_pPcap != NULL)
+    {
+        delete m_pPcap;
+        m_pPcap = NULL;
+    }
 }
 
-/**
+/*!
  * @brief MainWindow::initWidget  初始化界面信息
  */
 void MainWindow::initWidget()
@@ -48,7 +54,7 @@ void MainWindow::initWidget()
     connect(ui->actionSetting, SIGNAL(triggered(bool)), this, SLOT(slot_actionSeting_triggered()));
 }
 
-/**
+/*!
  * @brief MainWindow::initPcap  初始化Pcap组件
  */
 void MainWindow::initPcap()
@@ -76,23 +82,30 @@ void MainWindow::initPcap()
     }
 }
 
-/**
+/*!
  * @brief MainWindow::initDefaultSavePath   设置默认保存文件路径
  */
 void MainWindow::initDefaultSavePath()
 {
-    m_FilePath = QApplication::applicationDirPath()+ "/" + tr("CaptureFile");
-    QDir dir(m_FilePath);
+    QString t_DefaultPath = QApplication::applicationDirPath()+ "/" + tr("CaptureFile");
+    QDir dir(t_DefaultPath);
     if (!dir.exists())
     {
-        dir.mkpath(m_FilePath);
+        if (dir.mkpath(t_DefaultPath))
+        {
+            m_FilePath = t_DefaultPath;
+        }
+        else
+        {
+            m_FilePath = QApplication::applicationDirPath();
+        }
     }
 
     m_pPermanentStatusbar = new QLabel(tr("Current save file path: ")+m_FilePath, this);
     ui->statusbar->addPermanentWidget(m_pPermanentStatusbar);
 }
 
-/**
+/*!
  * @brief MainWindow::closeEvent  窗口退出事件
  * @param event  退出事件对象
  */
@@ -180,14 +193,14 @@ void MainWindow::slot_actionOpen_triggered()
     }
 }
 
-/**
+/*!
  * @brief MainWindow::slot_actionExit_triggered  菜单：退出软件
  */
 void MainWindow::slot_actionExit_triggered()
 {
     this->close();
 }
-/**
+/*!
  * @brief MainWindow::slot_actionSeting_triggered  设置保存捕获到报文路径
  */
 void MainWindow::slot_actionSeting_triggered()

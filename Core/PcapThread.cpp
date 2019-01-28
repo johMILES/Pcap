@@ -5,6 +5,8 @@
 #include <QByteArray>
 #include <QString>
 
+#include "gloab.h"
+
 PcapThread *p_PcapThread = NULL;
 PcapThread::PcapThread()
 {
@@ -23,7 +25,7 @@ PcapThread::~PcapThread()
 }
 
 
-/**
+/*!
  * @brief pcapLoop  捕获功能(pcap_loop)的回调函数
  * @param param
  * @param header    通用包信息
@@ -36,7 +38,7 @@ void pcapLoop(uchar *param, const struct pcap_pkthdr *header, const uchar *pkt_d
 }
 
 
-/**
+/*!
  * @brief PcapThread::run  线程运行
  */
 void PcapThread::run()
@@ -63,7 +65,7 @@ void PcapThread::run()
 }
 
 
-/**
+/*!
  * @brief PcapThread::Loop  处理捕获到的数据包功能
  * @param header    数据包通用信息
  * @param pkt_data  该数据包全部信息
@@ -146,7 +148,7 @@ void PcapThread::Loop(const struct pcap_pkthdr *header, const uchar *pkt_data)
 }
 
 
-/**
+/*!
  * @brief PcapThread::TCP                   TCP协议解析
  * @param[in] const sniff_ip *ip            IP头信息
  * @param[in] int size_ip                   IP头长度
@@ -196,7 +198,7 @@ _MessageContent PcapThread::TCP(const sniff_ip *ip, int size_ip, uint len, const
 }
 
 
-/**
+/*!
 * @brief PcapThread::UDP	TCP协议解析
 * @param ip					IP头信息
 * @param size_ip			IP头长度
@@ -237,7 +239,7 @@ _MessageContent PcapThread::UDP(const sniff_ip *ip, int size_ip, const uchar *pk
 }
 
 
-/**
+/*!
  * @brief PcapThread::print_payload  打印包有效载荷数据（避免打印二进制数据）
  * @param payload
  * @param len
@@ -283,7 +285,7 @@ void PcapThread::print_payload(const uchar *payload, int len)
 }
 
 
-/**
+/*!
  * @brief PcapThread::print_hex_ascii_line  以16字节为单位打印数据：偏移十六进制ascii
  * @param payload   数据包数据
  * @param len       数据包长度
@@ -336,7 +338,7 @@ void PcapThread::print_hex_ascii_line(const uchar *payload, int len, int offset)
 }
 
 
-/**
+/*!
  * @brief PcapThread::getTimeDifference 计算时间差
  * @param timesec   秒数
  * @param timeusec  微秒(* 0.000001)转换为秒
