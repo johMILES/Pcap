@@ -41,6 +41,7 @@ PcapCommon::~PcapCommon()
 void PcapCommon::reset()
 {
     p_Port = 0;
+    m_pPcapThread = NULL;
 }
 
 
@@ -123,17 +124,19 @@ QVector<_DEVInfo> PcapCommon::findAllDev()
  * @param const _DEVInfo DevInfo
  * @return bool 是否正常启动抓包功能
  */
-bool PcapCommon::openCard(const _DEVInfo DevInfo)
+bool PcapCommon::openCard(const _DEVInfo  in_DevInfo)
 {
     char errbuf[PCAP_ERRBUF_SIZE];   //错误缓冲区
+
     //打开适配器
-    if ((m_pAHandle = pcap_open_live(
-             DevInfo.name.toUtf8().data(),	//设备名
-             65535,		//要捕捉的数据包的部分	65535保证能捕获到不同数据链路层上的每个数据包的全部内容
-             PCAP_OPENFLAG_PROMISCUOUS,	//设置混杂模式
-             1000,		//读取超时时间
-             errbuf		//错误缓冲池
-             )) == NULL)
+    m_pAHandle = pcap_open_live(
+                in_DevInfo.name.toUtf8().data(),	//设备名
+                65535,                              //要捕捉的数据包的部分	65535保证能捕获到不同数据链路层上的每个数据包的全部内容
+                PCAP_OPENFLAG_PROMISCUOUS,          //设置混杂模式
+                1000,                               //读取超时时间
+                errbuf );                           //错误缓冲池
+
+    if (m_pAHandle == NULL)
     {
         qDebug() << stderr << QString("Unable to open the adapter. [%1] is not supported by WinPcap").arg(m_pDevs->name);
         pcap_freealldevs(m_pAlldevs);
@@ -144,7 +147,7 @@ bool PcapCommon::openCard(const _DEVInfo DevInfo)
     QByteArray tFilter("ip and port ");
     tFilter.append(QString("%1").arg(p_Port));
     //设置过滤器
-    if (!setFilter(DevInfo.netmask.toUtf8().data(), tFilter.data()))
+    if (!setFilter(in_DevInfo.netmask.toUtf8().data(), tFilter.data()))
     {
         return false;
     }
@@ -152,7 +155,7 @@ bool PcapCommon::openCard(const _DEVInfo DevInfo)
     //启动线程进行抓包
     m_pPcapThread = new PcapThread(m_pAHandle, p_Port);
     qRegisterMetaType<_MessageContent>("_MessageContent");		//注册_MessageContent
-	connect(m_pPcapThread, SIGNAL(signal_PayloadData(_MessageContent, QByteArray)),
+    connect(m_pPcapThread, SIGNAL(signal_PayloadData(_MessageContent, QByteArray)),
             this, SLOT(slot_RecvDataInfo(_MessageContent, QByteArray)) );
     m_pPcapThread->start();
     return true;
@@ -170,7 +173,12 @@ void PcapCommon::closeCard()
         pcap_close(m_pAHandle);
         m_pAHandle = NULL;
     }
-    m_pPcapThread->wait();
+    if(m_pPcapThread)
+    {
+        m_pPcapThread->wait();
+        delete m_pPcapThread;
+        m_pPcapThread = NULL;
+    }
 
     if (m_pWriteFile->isOpen())
     {
@@ -188,7 +196,6 @@ void PcapCommon::setPort(unsigned short port)
     p_Port = port;
 }
 
-
 /**
  * @brief PcapCommon::setFilePath   设置存放文件路径
  * @param path  最后一次抓包保存文件的路径
@@ -199,8 +206,8 @@ void PcapCommon::setFilePath(QString path)
     m_CurrentFileName = getTime()+".dat";
     m_FilePath+=path+"/"+m_CurrentFileName;
     m_pWriteFile = new QFile(m_FilePath);
-	if (!m_pWriteFile->open(QIODevice::WriteOnly/* | QIODevice::Truncate | QIODevice::Text*/))
-		return;
+    if (!m_pWriteFile->open(QIODevice::WriteOnly/* | QIODevice::Truncate | QIODevice::Text*/))
+        return;
 
 }
 
@@ -222,14 +229,14 @@ QString PcapCommon::getFileName()
  */
 void PcapCommon::slot_RecvDataInfo(_MessageContent MsgCon, QByteArray payload)
 {
-	static double time = 0;
-	static bool flag = false;
-	if (flag)
-	{
-		flag = false;
-		if (!m_pWriteFile->open(QIODevice::Append))
-			return;
-	}
+    static double time = 0;
+    static bool flag = false;
+    if (flag)
+    {
+        flag = false;
+        if (!m_pWriteFile->open(QIODevice::Append))
+            return;
+    }
 
     QDataStream out(m_pWriteFile);
     out.setVersion(QDataStream::Qt_5_7);
@@ -239,20 +246,16 @@ void PcapCommon::slot_RecvDataInfo(_MessageContent MsgCon, QByteArray payload)
 
     out << src_ip.data() << dst_ip.data()
         << MsgCon.SrcPoet << MsgCon.DstPoet
-		<< QByteArray::number(MsgCon.TimeDifference, 'E') << payload.toHex().data();
+        << QByteArray::number(MsgCon.TimeDifference, 'E') << payload.toHex().data();
 
-	time += MsgCon.TimeDifference;
-	if (time > 1)
-	{
-		time = 0;
-		flag = true;
-		m_pWriteFile->close();
-	}
-	//    qDebug() << QString("%1  %2  %3  %4  %5  %6 ")
-	//                /*.arg(src_mac.toHex().data()).arg(dst_mac.toHex().data())*/.arg(src_ip.data()).arg(dst_ip.data())
-	//                .arg(MsgCon.SrcPoet).arg(MsgCon.DstPoet).arg(MsgCon.TimeDifference).arg(payload.toHex().data());
+    time += MsgCon.TimeDifference;
+    if (time > 1)
+    {
+        time = 0;
+        flag = true;
+        m_pWriteFile->close();
+    }
 }
-
 
 /**
  * @brief PcapCommon::readDatFile 读取保存的文件
@@ -270,21 +273,21 @@ void PcapCommon::readDatFile(QString path)
         QByteArray dst_ip;
         QByteArray payload;
 
-		ushort SrcPoet;
-		ushort DstPoet;		//收发Port
-		QByteArray TimeDifference;		//报文时差
+        ushort SrcPoet;
+        ushort DstPoet;                 //收发Port
+        QByteArray TimeDifference;		//报文时差
 
         out >> src_ip >> dst_ip
-            >> SrcPoet >> DstPoet >> TimeDifference >> payload;
+                >> SrcPoet >> DstPoet >> TimeDifference >> payload;
 
-		char * data = { 0 };
-		data = (char*)malloc(payload.length());
-		memset(data, 0, payload.length());
+        char * data = { 0 };
+        data = (char*)malloc(payload.length());
+        memset(data, 0, payload.length());
 
-		data = payload.data();
+        data = payload.data();
         data = NULL;
         free(data);
-	}
+    }
 
     file.close();
 }
@@ -329,47 +332,47 @@ _DEVInfo PcapCommon::ifPcap_t(pcap_if_t *d)
     pcap_addr_t *a;
 
     Dev.name = d->name;
-//    qDebug() << d->name;
+    //    qDebug() << d->name;
 
     if (d->description)
     {
         Dev.description = d->description;
-//        qDebug() << "Description:" << d->description;
+        //        qDebug() << "Description:" << d->description;
     }
 
     //回环地址
-//    qDebug() << QString("%1").arg((d->flags & PCAP_IF_LOOPBACK) ? "yes" : "no");
+    //    qDebug() << QString("%1").arg((d->flags & PCAP_IF_LOOPBACK) ? "yes" : "no");
 
     for (a = d->addresses; a; a = a->next) {
-//        qDebug() << QString("Address Family: #%1").arg(a->addr->sa_family);
+        //        qDebug() << QString("Address Family: #%1").arg(a->addr->sa_family);
 
         switch (a->addr->sa_family)
         {
         case AF_INET:
             Dev.familyName = "AF_INET";
-//            qDebug() << QString("--------------AF_INET--------------");  //打印网络地址类型
+            //            qDebug() << QString("--------------AF_INET--------------");  //打印网络地址类型
             if (a->addr)		//打印IP地址
             {
                 Dev.address = iptos(((struct sockaddr_in *)a->addr)->sin_addr.s_addr);
-//                qDebug() << QString("Address: %1").arg(iptos(((struct sockaddr_in *)a->addr)->sin_addr.s_addr));
+                //                qDebug() << QString("Address: %1").arg(iptos(((struct sockaddr_in *)a->addr)->sin_addr.s_addr));
             }
             if (a->netmask)		//打印掩码
             {
                 Dev.netmask = iptos(((struct sockaddr_in *)a->netmask)->sin_addr.s_addr);
-//                qDebug() << QString("Netmask: %1").arg(iptos(((struct sockaddr_in *)a->netmask)->sin_addr.s_addr));
+                //                qDebug() << QString("Netmask: %1").arg(iptos(((struct sockaddr_in *)a->netmask)->sin_addr.s_addr));
             }
-//            if (a->broadaddr)	//打印广播地址
-//                qDebug() << QString("\tBroadcast Address: %1 ").arg(iptos(((struct sockaddr_in *)a->broadaddr)->sin_addr.s_addr));
-//            if (a->dstaddr)		//目的地址
-//                qDebug() << QString("Destination Address: %1 ").arg(iptos(((struct sockaddr_in *)a->dstaddr)->sin_addr.s_addr));
+            //            if (a->broadaddr)	//打印广播地址
+            //                qDebug() << QString("\tBroadcast Address: %1 ").arg(iptos(((struct sockaddr_in *)a->broadaddr)->sin_addr.s_addr));
+            //            if (a->dstaddr)		//目的地址
+            //                qDebug() << QString("Destination Address: %1 ").arg(iptos(((struct sockaddr_in *)a->dstaddr)->sin_addr.s_addr));
             break;
-//        case AF_INET6:
-//            qDebug()<<"------------AF_INET6-----------------";
-//            if (a->addr)
-//                QString("Address: %1").arg(ip6tos(a->addr, ip6str, sizeof(ip6str)));
-//            break;
+            //        case AF_INET6:
+            //            qDebug()<<"------------AF_INET6-----------------";
+            //            if (a->addr)
+            //                QString("Address: %1").arg(ip6tos(a->addr, ip6str, sizeof(ip6str)));
+            //            break;
         default:
-//            qDebug() << QString("Address Family Name: Unknown ");
+            //            qDebug() << QString("Address Family Name: Unknown ");
             break;
         }
     }

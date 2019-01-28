@@ -23,6 +23,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    if(m_pPcap)
+    {
+        delete m_pPcap;
+        m_pPcap = NULL;
+    }
     delete ui;
 }
 
@@ -87,9 +92,7 @@ void MainWindow::initDefaultSavePath()
     {
         dir.mkpath(m_FilePath);
     }
-
-    m_pPermanentStatusbar = new QLabel(tr("Current save file path: ")+m_FilePath, this);
-    ui->statusbar->addPermanentWidget(m_pPermanentStatusbar);
+    showStatusBar(tr("Current save file path: ")+m_FilePath);
 }
 
 /**
@@ -117,7 +120,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 
 /*!
- * \brief MainWindow::slot_Airodump_ng_Button  开始抓包按钮事件
+ * @brief 开始抓包按钮事件
  */
 void MainWindow::slot_Airodump_ng_Button()
 {
@@ -199,8 +202,7 @@ void MainWindow::slot_actionSeting_triggered()
         return;
     }
     m_FilePath = tr("Current save file path: ")+file_path;
-    m_pPermanentStatusbar->setText(m_FilePath);
-    ui->statusbar->addPermanentWidget(m_pPermanentStatusbar);
+    showStatusBar(m_FilePath);
 }
 
 
@@ -220,4 +222,13 @@ bool MainWindow::getPort()
         m_pPcap->setPort(port);
         return true;
     }
+}
+
+/*!
+ * @brief 显示状态
+ * @param str 状态内容
+ */
+void MainWindow::showStatusBar(QString str)
+{
+    ui->statusbar->showMessage(str);
 }

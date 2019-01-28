@@ -10,8 +10,9 @@
     </message>
     <message>
         <location filename="Core/mainwindow.ui" line="27"/>
-        <source>参数设置</source>
-        <translation></translation>
+        <source>监听参数设置</source>
+        <oldsource>参数设置</oldsource>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="Core/mainwindow.ui" line="45"/>
@@ -51,13 +52,15 @@
     </message>
     <message>
         <location filename="Core/mainwindow.ui" line="188"/>
-        <source>打开(&amp;O)</source>
-        <translation></translation>
+        <source>回放(&amp;O)</source>
+        <oldsource>打开(&amp;O)</oldsource>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="Core/mainwindow.ui" line="191"/>
-        <source>打开</source>
-        <translation></translation>
+        <source>回放</source>
+        <oldsource>打开</oldsource>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="Core/mainwindow.ui" line="194"/>
@@ -75,13 +78,17 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="207"/>
-        <location filename="Core/mainwindow.ui" line="210"/>
+        <location filename="Core/mainwindow.ui" line="205"/>
+        <source>Ctrl+Q</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="Core/mainwindow.ui" line="213"/>
         <source>设置</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.ui" line="215"/>
+        <location filename="Core/mainwindow.ui" line="218"/>
         <source>关于</source>
         <translation></translation>
     </message>
@@ -97,52 +104,52 @@
     </message>
     <message>
         <location filename="Core/mainwindow.cpp" line="90"/>
-        <location filename="Core/mainwindow.cpp" line="200"/>
+        <location filename="Core/mainwindow.cpp" line="199"/>
         <source>Current save file path: </source>
         <translation>文件路径：</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="102"/>
+        <location filename="Core/mainwindow.cpp" line="101"/>
         <source>warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="102"/>
+        <location filename="Core/mainwindow.cpp" line="101"/>
         <source>in working ,exit?</source>
         <translation>正在抓包中，是否退出？</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="132"/>
+        <location filename="Core/mainwindow.cpp" line="131"/>
         <source>Warning</source>
         <translation>警告</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="132"/>
+        <location filename="Core/mainwindow.cpp" line="131"/>
         <source>Port number error</source>
         <translation>端口设置失败！请设置在0-65535之间</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="141"/>
+        <location filename="Core/mainwindow.cpp" line="139"/>
         <source>Connection Failed!</source>
         <translation>连接失败！</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="145"/>
+        <location filename="Core/mainwindow.cpp" line="143"/>
         <source>Connection Succeeded...</source>
         <translation>连接成功...</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="173"/>
+        <location filename="Core/mainwindow.cpp" line="172"/>
         <source>select file</source>
         <translation>请选择文件</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="173"/>
+        <location filename="Core/mainwindow.cpp" line="172"/>
         <source>/CaptureFile</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="195"/>
+        <location filename="Core/mainwindow.cpp" line="194"/>
         <source>Save File Path...</source>
         <translation>请选择将要保存文件路径...</translation>
     </message>
@@ -151,17 +158,17 @@
         <translation type="vanished">保存文件路径为：</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="146"/>
+        <location filename="Core/mainwindow.cpp" line="144"/>
         <source>End</source>
         <translation>结束记录</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="152"/>
+        <location filename="Core/mainwindow.cpp" line="150"/>
         <source>Disconnected</source>
         <translation>已断开连接</translation>
     </message>
     <message>
-        <location filename="Core/mainwindow.cpp" line="153"/>
+        <location filename="Core/mainwindow.cpp" line="151"/>
         <source>Start</source>
         <translation>开始记录</translation>
     </message>
