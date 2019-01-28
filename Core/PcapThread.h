@@ -15,7 +15,7 @@ public:
 
 	void run();
 
-    void Loop(const struct pcap_pkthdr *header, const uchar *pkt_data);
+    void Loop(const struct pcap_pkthdr *header, const unsigned char *pkt_data);
 
 	double getTimeDifference(long,long);
 
@@ -24,7 +24,7 @@ signals:
 
 private:
 	pcap_t *m_pDev;
-    ushort p_Port;
+    unsigned short p_Port;
 
     _MessageContent TCP(const sniff_ip *ip, int size_ip, uint len, const uchar *buffer, QByteArray &payload);
 	_MessageContent UDP(const sniff_ip *ip, int size_ip, const uchar *buffer, QByteArray &payload);
@@ -33,10 +33,7 @@ private:
 	//以16字节为单位打印数据：偏移十六进制ascii
     void print_hex_ascii_line(const uchar *payload, int len, int offset);
 
-	/*
-	*打印包有效载荷数据（避免打印二进制数据）
-	*/
-    void print_payload(const uchar *payload, int len);
+    void print_payload(const unsigned char *payload, int len);
 	
 };
 

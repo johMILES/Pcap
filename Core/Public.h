@@ -102,8 +102,8 @@ typedef struct __LocalCardInfo
 }_LocalCardInfo;
 
 typedef struct __DEVInfo {
-	QString name;
-	QString description;
+    QString name;               //
+    QString description;        //
 	QString familyName;         //协议族
 	QString address;            //主机ip
 	QString netmask;            //子网掩码
@@ -119,7 +119,7 @@ typedef struct ip_address {
 }ip_address;
 
 /* IPv4 首部 */
-typedef struct ip_header {
+typedef struct IP_Header {
 	u_char  ver_ihl;        // 版本 (4 bits) + 首部长度 (4 bits)
 	u_char  tos;            // 服务类型(Type of service) 
 	u_short tlen;           // 总长(Total length) 

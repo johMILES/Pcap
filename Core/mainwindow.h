@@ -36,6 +36,7 @@ private:
     void initPcap();
     void initDefaultSavePath();
     bool getPort();
+    void showStatusBar(QString);
 
 private:
     Ui::MainWindow *ui;
