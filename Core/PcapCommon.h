@@ -1,14 +1,16 @@
 #pragma once
 
+#ifndef PCAPCOMMON_H
+#define PCAPCOMMON_H
+
 //#define HVAE_REMOTE
 #include "pcap.h"
 #include "PcapThread.h"
 #include "Public.h"
+#include "mydealthread.h"
 
 #include <QObject>
-#include <QString>
 #include <QVector>
-#include <QFile>
 
 class PcapCommon : public QObject
 {
@@ -21,12 +23,17 @@ public:
 	void winSocketInit();
 	//获取适配器
 	QVector<_DEVInfo> findAllDev();
+
     //打开适配器，开始抓包
 	bool openCard(const _DEVInfo);
+
     //关闭抓包
 	void closeCard();
+
     //设置过滤端口
     void setPort(unsigned short port);
+
+	//设置默认保存抓包文件路径
     void setFilePath(QString path);
 
     //获取本次保存的文件名称
@@ -36,24 +43,25 @@ public:
     void readDatFile(QString path);
 
     QString m_FilePath;   //默认保存文件路径
-    QString m_CurrentFileName;   //默认保存文件路径
+    QString m_CurrentFileName;   //保存文件名称
+
+private slots:
 
 private:
 	pcap_if_t *m_pAlldevs;
 	pcap_if_t *m_pDevs;
 	pcap_t *m_pAHandle;
-    unsigned short p_Port;
+    unsigned short p_Port;			//过滤端口号
 
-	//适配器个数
-	int decCount;
+	//QThreadPool *m_pThreadPool;		//线程池
+	//QList<MyDealThread*> m_ListThread;
 
-	PcapThread *m_pPcapThread;
-	QFile *m_pWriteFile;
+    MyDealThread *m_pDealThread;
+    PcapThread *m_pPcapThread;		//抓包线程
 
-    QByteArray HexStringToByteArray(QString);
-    QString ByteArrayToHexString(QByteArray &ba);
+	void init();
 
-	void reset();
+    void reset(unsigned short port = 0);
 	//设置过滤器
 	bool setFilter(const char*, char*);
 
@@ -65,8 +73,6 @@ private:
 
     QString getTime();
 
-private slots:
-	void slot_RecvDataInfo(_MessageContent MsgCon, QByteArray payload);
-
 };
 
+#endif // PCAPTHREAD_H

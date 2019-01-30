@@ -25,7 +25,6 @@ HEADERS += \
     Core/PcapCommon.h \
     Core/PcapThread.h \
     Core/Public.h \
-    Core/tcpipcommon.h \
     Core/mainwindow.h \
     Core/gloab.h \
     Core/mydealthread.h

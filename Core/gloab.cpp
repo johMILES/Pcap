@@ -1,6 +1,7 @@
 #include "gloab.h"
 
-QQueue<QByteArray> G_RecvQueue;
+QQueue<MessageContent> G_RecvQueue;
 QMutex G_QueneMutex;
-QWaitCondition G_WaitCondition;
+QMutex G_WaitMutex;
+QWaitCondition G_RecvCondition;
 

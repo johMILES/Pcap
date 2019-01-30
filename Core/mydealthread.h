@@ -2,25 +2,29 @@
 #define MYDEALTHREAD_H
 
 #include <QThread>
+#include <QFile>
+
+#include "Public.h"
 
 class MyDealThread : public QThread
 {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    explicit MyDealThread(QObject *parent = 0);
+    explicit MyDealThread(QString path, QObject *parent = 0);
+	~MyDealThread();
 
-protected:
-    void run();
+	void setFilePath(QString path);
 
-signals:
-
-public slots:
-
-private:
-    void dealRecvArray(QByteArray in_data);
+public:
+	void run();
 
 private:
-    bool b_isWork;
+    void outFile(MessageContent in_data);
+
+private:
+	QString m_pPath;
+	QFile *m_pWriteFile;
+	bool b_isWork;
 
 };
 

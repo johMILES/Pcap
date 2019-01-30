@@ -32,21 +32,21 @@ protected:
     void closeEvent(QCloseEvent *event);
 
 private:
+    void initMenu();
     void initWidget();
     void initPcap();
     void initDefaultSavePath();
-    bool getPort();
+	void showStatusBar(QString filepath);
+	bool getPort();
 
 private:
     Ui::MainWindow *ui;
     PcapCommon *m_pPcap;
     QMap<int, _DEVInfo> m_DeviceList;
 
-private:
-    QString m_FilePath;
-    bool m_bFlag;	//是否正在抓包标志
+	QString m_FilePath;
+	bool m_bFlag;	//是否正在抓包标志
 
-    QLabel *m_pPermanentStatusbar;
 };
 
 #endif // MAINWINDOW_H

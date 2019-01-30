@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "PcapCommon.h"
 
+#include <QIcon>
 #include <QDebug>
 #include <QCloseEvent>
 #include <QMessageBox>
@@ -14,11 +15,9 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    m_pPcap = NULL;
-
     initWidget();
-    initDefaultSavePath();
 
+    initDefaultSavePath();
 }
 
 MainWindow::~MainWindow()
@@ -37,7 +36,8 @@ MainWindow::~MainWindow()
  */
 void MainWindow::initWidget()
 {
-    m_bFlag = false;
+	m_bFlag = false;
+    m_pPcap = NULL;
 
     if(m_pPcap == NULL)
     {
@@ -46,7 +46,20 @@ void MainWindow::initWidget()
 
     //按钮
     connect(ui->Start_Btn, SIGNAL(clicked(bool)), this, SLOT(slot_Airodump_ng_Button()));
-    ////Menu事件
+
+    initMenu();
+}
+
+
+/**
+ * @brief MainWindow::initMenu  初始化菜单栏
+ */
+void MainWindow::initMenu()
+{
+    ui->actionOpen->setIcon(QIcon(":/Menu/folder.png"));
+    ui->actionExit->setIcon(QIcon(":/Menu/exit.png"));
+    ui->actionSetting->setIcon(QIcon(":/Menu/settings.png"));
+
     //文件：   打开文件
     connect(ui->actionOpen, SIGNAL(triggered(bool)), this, SLOT(slot_actionOpen_triggered()));
     connect(ui->actionExit, SIGNAL(triggered(bool)), this, SLOT(slot_actionExit_triggered()));
@@ -91,18 +104,13 @@ void MainWindow::initDefaultSavePath()
     QDir dir(t_DefaultPath);
     if (!dir.exists())
     {
-        if (dir.mkpath(t_DefaultPath))
-        {
-            m_FilePath = t_DefaultPath;
-        }
-        else
-        {
-            m_FilePath = QApplication::applicationDirPath();
-        }
-    }
-
-    m_pPermanentStatusbar = new QLabel(tr("Current save file path: ")+m_FilePath, this);
-    ui->statusbar->addPermanentWidget(m_pPermanentStatusbar);
+		if (!dir.mkpath(t_DefaultPath))
+		{
+			m_FilePath = QApplication::applicationDirPath();
+		}
+	}
+	m_FilePath = t_DefaultPath;
+	showStatusBar(m_FilePath);
 }
 
 /*!
@@ -117,10 +125,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
                                                                QMessageBox::Yes | QMessageBox::No);//正在抓包中，是否退出？
         if (res == QMessageBox::StandardButton::Yes)
         {
-            if(m_pPcap)
-            {
-                m_pPcap->closeCard();
-            }
             event->accept();		//接受信号 程序退出
             return;
         }
@@ -134,13 +138,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
  */
 void MainWindow::slot_Airodump_ng_Button()
 {
-    if(m_pPcap == NULL)
-    {
-        initPcap();
-    }
     if (!m_bFlag)
     {
-        // 1打开适配器
+        // 开始
         if (!getPort())
         {
             QMessageBox::warning(this, tr("Warning"), tr("Port number error"));
@@ -155,6 +155,8 @@ void MainWindow::slot_Airodump_ng_Button()
             return;
         }
 
+        ui->actionSetting->setIcon(QIcon(":/Menu/disabled.png"));
+
         ui->Prompt_TextEdit->setPlainText(tr("Connection Succeeded..."));
         ui->Start_Btn->setText(tr("End"));
     }
@@ -164,8 +166,12 @@ void MainWindow::slot_Airodump_ng_Button()
         m_pPcap->closeCard();
         ui->Prompt_TextEdit->append(tr("Disconnected"));
         ui->Start_Btn->setText(tr("Start"));
+
+        ui->actionSetting->setIcon(QIcon(":/Menu/settings.png"));
     }
 
+    ui->actionOpen->setEnabled(m_bFlag);
+    ui->actionSetting->setEnabled(m_bFlag);
     ui->Card_ComboBox->setEnabled(m_bFlag);
     ui->Port_LineEdit->setEnabled(m_bFlag);
 
@@ -177,10 +183,6 @@ void MainWindow::slot_Airodump_ng_Button()
  */
 void MainWindow::slot_actionOpen_triggered()
 {
-    if(m_pPcap == NULL)
-    {
-        initPcap();
-    }
     if(m_pPcap)
     {
         //选择存放抓包文件路径
@@ -212,8 +214,7 @@ void MainWindow::slot_actionSeting_triggered()
         return;
     }
     m_FilePath = tr("Current save file path: ")+file_path;
-    m_pPermanentStatusbar->setText(m_FilePath);
-    ui->statusbar->addPermanentWidget(m_pPermanentStatusbar);
+    showStatusBar(m_FilePath);
 }
 
 
@@ -233,4 +234,13 @@ bool MainWindow::getPort()
         m_pPcap->setPort(port);
         return true;
     }
+}
+
+/*!
+ * @brief 显示状态
+ * @param str 状态内容
+ */
+void MainWindow::showStatusBar(QString str)
+{
+    ui->statusbar->showMessage(str);
 }

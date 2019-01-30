@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/">
         <file>ICON/Pcap.ico</file>
+        <file>Menu/folder.png</file>
+        <file>Menu/folder_Disable.png</file>
+        <file>Menu/Inquire.png</file>
+        <file>Menu/settings.png</file>
+        <file>Menu/exit.png</file>
+        <file>Menu/disabled.png</file>
     </qresource>
 </RCC>
