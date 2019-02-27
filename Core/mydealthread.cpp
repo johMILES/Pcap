@@ -14,20 +14,47 @@ MyDealThread::MyDealThread(QString path, QObject *parent)
 
 MyDealThread::~MyDealThread()
 {
-	if (m_pWriteFile->isOpen())
-	{
-		m_pWriteFile->close();
+    qDebug()<<"MyDealThread::~MyDealThread()";
+    if (m_pWriteFile)
+    {
+        if (m_pWriteFile->isOpen())
+            m_pWriteFile->close();
+
 		delete m_pWriteFile;
 		m_pWriteFile = NULL;
 	}
 }
 
 
+/**
+ * @brief MyDealThread::setFilePath  设置写入文件全路径
+ * @param path  文件路径
+ */
 void MyDealThread::setFilePath(QString path)
 {
+    if (m_pWriteFile)
+    {
+        if (m_pWriteFile->isOpen())
+            m_pWriteFile->close();
+
+        delete m_pWriteFile;
+        m_pWriteFile = NULL;
+    }
 	m_pWriteFile = new QFile(path);
 }
 
+
+/**
+ * @brief MyDealThread::stopCapturing  停止捕获
+ */
+void MyDealThread::stopCapturing()
+{
+    if (m_pWriteFile)
+    {
+        if (m_pWriteFile->isOpen())
+            m_pWriteFile->close();
+    }
+}
 
 void MyDealThread::run()
 {
@@ -52,6 +79,11 @@ void MyDealThread::run()
     }
 }
 
+/**
+ * @brief MyDealThread::outFile  将要输出数据保存在文件中（若单次或累计写入文件间隔时间大于1秒则关闭重新打开文件一次
+ * 确保抓包写入文件内容时在软件发生异常数据不丢失）
+ * @param in_data   将要写入文件数据信息
+ */
 void MyDealThread::outFile(MessageContent in_data)
 {
     static double time = 0;
@@ -66,6 +98,7 @@ void MyDealThread::outFile(MessageContent in_data)
         flag = false;
     }
 
+    //写入文件
     QDataStream out(m_pWriteFile);
     out.setVersion(QDataStream::Qt_5_7);
 

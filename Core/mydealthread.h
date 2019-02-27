@@ -14,6 +14,7 @@ public:
 	~MyDealThread();
 
 	void setFilePath(QString path);
+    void stopCapturing();
 
 public:
 	void run();

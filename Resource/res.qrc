@@ -7,5 +7,7 @@
         <file>Menu/settings.png</file>
         <file>Menu/exit.png</file>
         <file>Menu/disabled.png</file>
+        <file>Menu/start.png</file>
+        <file>Menu/stop.png</file>
     </qresource>
 </RCC>
