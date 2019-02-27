@@ -25,14 +25,23 @@ HEADERS += \
     Core/PcapCommon.h \
     Core/PcapThread.h \
     Core/Public.h \
-    Core/tcpipcommon.h \
-    Core/mainwindow.h
+    Core/mainwindow.h \
+    Core/gloab.h \
+    Core/mydealthread.h \
+    Core/optionwidget.h \
+    Base/messaging.h \
+    Core/playback.h
 
 SOURCES += \
     Core/PcapCommon.cpp \
     Core/PcapThread.cpp \
     main.cpp \
-    Core/mainwindow.cpp
+    Core/mainwindow.cpp \
+    Core/gloab.cpp \
+    Core/mydealthread.cpp \
+    Core/optionwidget.cpp \
+    Base/messaging.cpp \
+    Core/playback.cpp
 
 INCLUDEPATH += $$PWD/lib/WpdPack/Include
 
